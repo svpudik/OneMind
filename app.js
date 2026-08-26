@@ -338,21 +338,90 @@ function startBreathCycle() {
 }
 // Správa témat
 let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
+let autoSunrise;
+let autoSunset;
+let autoCoordinates;
+let autoThemeTimer;
+let autoLocationRequested = false;
+
+function solarEvent(date, latitude, longitude, sunrise) {
+  const day = Math.ceil((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const longitudeHour = longitude / 15;
+  const approximateTime = day + ((sunrise ? 6 : 18) - longitudeHour) / 24;
+  const meanAnomaly = 0.9856 * approximateTime - 3.289;
+  const solarLongitude = (meanAnomaly + 1.916 * Math.sin(meanAnomaly * Math.PI / 180) + 0.02 * Math.sin(2 * meanAnomaly * Math.PI / 180) + 282.634 + 360) % 360;
+  let rightAscension = Math.atan(0.91764 * Math.tan(solarLongitude * Math.PI / 180)) * 180 / Math.PI;
+  rightAscension = (rightAscension + 360) % 360;
+  rightAscension += Math.floor(solarLongitude / 90) * 90 - Math.floor(rightAscension / 90) * 90;
+  rightAscension /= 15;
+  const sineDeclination = 0.39782 * Math.sin(solarLongitude * Math.PI / 180);
+  const cosineDeclination = Math.cos(Math.asin(sineDeclination));
+  const latitudeRadians = latitude * Math.PI / 180;
+  const cosineHourAngle = (Math.cos(90.833 * Math.PI / 180) - sineDeclination * Math.sin(latitudeRadians)) / (cosineDeclination * Math.cos(latitudeRadians));
+  if (cosineHourAngle < -1 || cosineHourAngle > 1) return undefined;
+  let hourAngle = Math.acos(cosineHourAngle) * 180 / Math.PI;
+  if (sunrise) hourAngle = 360 - hourAngle;
+  hourAngle /= 15;
+  const universalTime = (hourAngle + rightAscension - 0.06571 * approximateTime - 6.622 - longitudeHour + 24) % 24;
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0) + universalTime * 3600000);
+}
+
+function normalizeSolarEvent(event, now, sunrise) {
+  if (!event) return undefined;
+  const day = 86400000;
+  if (sunrise && event > now.getTime() + 21600000) return new Date(event.getTime() - day);
+  if (!sunrise && event < now.getTime() - 21600000) return new Date(event.getTime() + day);
+  return event;
+}
+
+function isAutoEvening() {
+  const now = new Date();
+  if (!autoSunrise || !autoSunset) {
+    const hour = now.getHours();
+    return hour >= 19 || hour < 7;
+  }
+  return now >= new Date(autoSunset.getTime() - 3600000) || now < autoSunrise;
+}
+
+function requestAutoLocation() {
+  if (autoLocationRequested || !navigator.geolocation) return;
+  autoLocationRequested = true;
+  navigator.geolocation.getCurrentPosition(position => {
+    autoCoordinates = position.coords;
+    if (currentTheme === 'auto') applyTheme('auto');
+  }, () => {}, { maximumAge: 86400000, timeout: 5000 });
+}
 
 function applyTheme(theme) {
-  document.body.classList.remove('theme-dark', 'theme-light');
-  document.documentElement.dataset.theme = theme;
+  if (theme === 'auto' && autoCoordinates) {
+    const now = new Date();
+    autoSunrise = normalizeSolarEvent(solarEvent(now, autoCoordinates.latitude, autoCoordinates.longitude, true), now, true);
+    autoSunset = normalizeSolarEvent(solarEvent(now, autoCoordinates.latitude, autoCoordinates.longitude, false), now, false);
+  }
+  const effectiveTheme = theme === 'auto' ? (isAutoEvening() ? 'red' : 'blue') : theme;
+  document.body.classList.remove('theme-dark', 'theme-light', 'theme-red', 'theme-blue');
+  document.documentElement.dataset.theme = effectiveTheme;
   
-  if (theme === 'dark') {
+  if (effectiveTheme === 'dark') {
     document.body.classList.add('theme-dark');
-  } else if (theme === 'light') {
+  } else if (effectiveTheme === 'light') {
     document.body.classList.add('theme-light');
+  } else if (effectiveTheme === 'red') {
+    document.body.classList.add('theme-red');
+  } else if (effectiveTheme === 'blue') {
+    document.body.classList.add('theme-blue');
   }
   // Pokud je theme === 'auto', o vše se stará CSS media query @media (prefers-color-scheme: light)
 
   document.getElementById('btn-theme-auto').classList.toggle('active', theme === 'auto');
   document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
   document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
+  document.getElementById('btn-theme-blue').classList.toggle('active', theme === 'blue');
+  clearTimeout(autoThemeTimer);
+  if (theme === 'auto') {
+    requestAutoLocation();
+    autoThemeTimer = window.setTimeout(() => applyTheme('auto'), 60000);
+  }
 }
 
 function setTheme(theme) {
@@ -364,6 +433,7 @@ function setTheme(theme) {
 document.getElementById('btn-theme-auto').addEventListener('click', () => setTheme('auto'));
 document.getElementById('btn-theme-dark').addEventListener('click', () => setTheme('dark'));
 document.getElementById('btn-theme-light').addEventListener('click', () => setTheme('light'));
+document.getElementById('btn-theme-blue').addEventListener('click', () => setTheme('blue'));
 document.getElementById('btn-cs').addEventListener('click', () => setLanguage('cs'));
 document.getElementById('btn-en').addEventListener('click', () => setLanguage('en'));
 const settingsToggle = document.getElementById('settings-toggle');

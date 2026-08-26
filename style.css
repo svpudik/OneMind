@@ -59,16 +59,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] {
-    --bg-color: #0b0f19;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --circle-border: rgba(56, 189, 248, 0.5);
-    --circle-gradient-start: rgba(56, 189, 248, 0.4);
-    --circle-gradient-end: rgba(14, 165, 233, 0);
-    --circle-shadow: rgba(56, 189, 248, 0.2);
-    --accent-color: #38bdf8;
-    --divider-color: #334155;
-    --btn-inactive: #64748b;
+    --bg-color: #1a0c0c;
+    --text-primary: #f5e7e0;
+    --text-secondary: #c9aaa0;
+    --circle-border: rgba(239, 68, 68, 0.55);
+    --circle-gradient-start: rgba(239, 68, 68, 0.32);
+    --circle-gradient-end: rgba(127, 29, 29, 0);
+    --circle-shadow: rgba(239, 68, 68, 0.18);
+    --accent-color: #f87171;
+    --divider-color: #5f2929;
+    --btn-inactive: #a87878;
+    --control-bg: #2a1212;
   }
 }
 
@@ -80,17 +81,17 @@
 
 /* Třídy pro manuální přepnutí z zobrazení (override) */
 body.theme-dark {
-  --bg-color: #0b0f19;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --circle-border: rgba(56, 189, 248, 0.5);
-  --circle-gradient-start: rgba(56, 189, 248, 0.4);
-  --circle-gradient-end: rgba(14, 165, 233, 0);
-  --circle-shadow: rgba(56, 189, 248, 0.2);
-  --accent-color: #38bdf8;
-  --divider-color: #334155;
-  --btn-inactive: #64748b;
-  --control-bg: #111827;
+  --bg-color: #1a0c0c;
+  --text-primary: #f5e7e0;
+  --text-secondary: #c9aaa0;
+  --circle-border: rgba(239, 68, 68, 0.55);
+  --circle-gradient-start: rgba(239, 68, 68, 0.32);
+  --circle-gradient-end: rgba(127, 29, 29, 0);
+  --circle-shadow: rgba(239, 68, 68, 0.18);
+  --accent-color: #f87171;
+  --divider-color: #5f2929;
+  --btn-inactive: #a87878;
+  --control-bg: #2a1212;
 }
 
 body.theme-light {
@@ -107,7 +108,22 @@ body.theme-light {
   --control-bg: #ffffff;
 }
 
-:root[data-theme="dark"] body {
+body.theme-red {
+  --bg-color: #1a0c0c;
+  --text-primary: #f5e7e0;
+  --text-secondary: #c9aaa0;
+  --circle-border: rgba(239, 68, 68, 0.55);
+  --circle-gradient-start: rgba(239, 68, 68, 0.32);
+  --circle-gradient-end: rgba(127, 29, 29, 0);
+  --circle-shadow: rgba(239, 68, 68, 0.18);
+  --accent-color: #f87171;
+  --divider-color: #5f2929;
+  --btn-inactive: #a87878;
+  --control-bg: #2a1212;
+}
+
+body.theme-blue,
+:root[data-theme="blue"] body {
   --bg-color: #0b0f19;
   --text-primary: #e2e8f0;
   --text-secondary: #94a3b8;
@@ -119,6 +135,20 @@ body.theme-light {
   --divider-color: #334155;
   --btn-inactive: #64748b;
   --control-bg: #111827;
+}
+
+:root[data-theme="dark"] body {
+  --bg-color: #1a0c0c;
+  --text-primary: #f5e7e0;
+  --text-secondary: #c9aaa0;
+  --circle-border: rgba(239, 68, 68, 0.55);
+  --circle-gradient-start: rgba(239, 68, 68, 0.32);
+  --circle-gradient-end: rgba(127, 29, 29, 0);
+  --circle-shadow: rgba(239, 68, 68, 0.18);
+  --accent-color: #f87171;
+  --divider-color: #5f2929;
+  --btn-inactive: #a87878;
+  --control-bg: #2a1212;
 }
 
 :root[data-theme="light"] body {
@@ -133,6 +163,20 @@ body.theme-light {
   --divider-color: #cbd5e1;
   --btn-inactive: #94a3b8;
   --control-bg: #ffffff;
+}
+
+:root[data-theme="red"] body {
+  --bg-color: #1a0c0c;
+  --text-primary: #f5e7e0;
+  --text-secondary: #c9aaa0;
+  --circle-border: rgba(239, 68, 68, 0.55);
+  --circle-gradient-start: rgba(239, 68, 68, 0.32);
+  --circle-gradient-end: rgba(127, 29, 29, 0);
+  --circle-shadow: rgba(239, 68, 68, 0.18);
+  --accent-color: #f87171;
+  --divider-color: #5f2929;
+  --btn-inactive: #a87878;
+  --control-bg: #2a1212;
 }
 
 * {

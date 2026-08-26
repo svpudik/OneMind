@@ -9,7 +9,7 @@ const thoughtEl = document.getElementById('thought');
 const translations = {
   cs: {
     inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Singularita",
-    pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
+    pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto", calmReminder: "Připomenout klid po 30 min", dismiss: "Zavřít",
     frequencies: {
       brown: "Hnědý šum — Hluboké soustředění",
       432: "432 Hz harmonický — Přirozený klid",
@@ -19,7 +19,7 @@ const translations = {
   },
   en: {
     inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Singularity",
-    pace: "Pace", sound: "Sound", volume: "Volume", off: "Off",
+    pace: "Pace", sound: "Sound", volume: "Volume", off: "Off", calmReminder: "30 min device reminder", dismiss: "Dismiss",
     frequencies: {
       brown: "Brown Noise — Deep Focus",
       432: "432 Hz Harmonic — Natural Calm",
@@ -32,6 +32,10 @@ const translations = {
 let currentPhaseKey = 'inhale';
 let breathInterval = Number(localStorage.getItem('onemind_breath_interval')) || 4;
 let cycleTimeouts = [];
+let calmReminderEnabled = localStorage.getItem('onemind_calm_reminder') === 'true';
+let calmReminderTimer;
+let calmReminderElapsed = 0;
+let calmReminderStartedAt;
 let audioSettings = { enabled: false, frequency: 'off', volume: 0.35 };
 try {
   audioSettings = { ...audioSettings, ...JSON.parse(localStorage.getItem('onemind_audio_settings') || '{}') };
@@ -219,6 +223,7 @@ function updateLangUI() {
   document.getElementById('volume-label').innerText = language.volume;
   document.getElementById('sound-toggle').setAttribute('aria-label', `${language.sound}: ${audioSettings.enabled ? language.off : language.sound}`);
   updateFrequencyOptions();
+  updateCalmReminderUI();
   updateSoundUI();
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
@@ -237,6 +242,38 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('onemind_lang', lang);
   updateLangUI();
+}
+
+function scheduleCalmReminder() {
+  clearTimeout(calmReminderTimer);
+  if (!calmReminderEnabled) return;
+  calmReminderStartedAt = Date.now();
+  calmReminderTimer = window.setTimeout(showCalmReminder, Math.max(0, 1800000 - calmReminderElapsed));
+}
+
+function showCalmReminder() {
+  calmReminderElapsed = 0;
+  calmReminderStartedAt = undefined;
+  const message = currentLang === 'cs'
+    ? 'Jste u obrazovky již 30 minut. Zastavte se na chvíli, nadechněte se a vraťte se ke klidu.'
+    : 'You have been using a screen for 30 minutes. Take a moment to breathe and return to calm.';
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification('OneMind', { body: message, tag: 'onemind-calm-reminder' });
+    notification.onclick = () => window.focus();
+  }
+  if (!document.hidden) {
+    document.getElementById('calm-reminder-notification').hidden = false;
+  }
+}
+
+function updateCalmReminderUI() {
+  const language = translations[currentLang];
+  document.getElementById('calm-reminder').checked = calmReminderEnabled;
+  document.getElementById('calm-reminder-label').innerText = language.calmReminder;
+  document.getElementById('calm-reminder-message').innerText = currentLang === 'cs'
+    ? 'Jste u obrazovky již 30 minut. Zastavte se na chvíli, nadechněte se a vraťte se ke klidu.'
+    : 'You have been using a screen for 30 minutes. Take a moment to breathe and return to calm.';
+  document.getElementById('calm-reminder-dismiss').innerText = language.dismiss;
 }
 
 // Načtení JSON
@@ -349,6 +386,24 @@ breathIntervalSelect.addEventListener('change', event => {
   localStorage.setItem('onemind_breath_interval', String(breathInterval));
   startBreathCycle();
 });
+const calmReminder = document.getElementById('calm-reminder');
+calmReminder.checked = calmReminderEnabled;
+calmReminder.addEventListener('change', event => {
+  calmReminderEnabled = event.target.checked;
+  calmReminderElapsed = 0;
+  localStorage.setItem('onemind_calm_reminder', String(calmReminderEnabled));
+  if (calmReminderEnabled && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+  if (!calmReminderEnabled) {
+    document.getElementById('calm-reminder-notification').hidden = true;
+  }
+  scheduleCalmReminder();
+});
+document.getElementById('calm-reminder-dismiss').addEventListener('click', () => {
+  document.getElementById('calm-reminder-notification').hidden = true;
+  scheduleCalmReminder();
+});
 const soundToggle = document.getElementById('sound-toggle');
 const soundFrequencySelect = document.getElementById('sound-frequency');
 const soundVolume = document.getElementById('sound-volume');
@@ -383,3 +438,4 @@ document.addEventListener('visibilitychange', () => {
 
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);
+scheduleCalmReminder();

@@ -250,6 +250,21 @@ body {
   color: var(--text-secondary);
 }
 
+.reminder-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.reminder-control input {
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+
 .ctrl-select {
   background-color: var(--control-bg);
   border: 1px solid var(--divider-color);
@@ -329,6 +344,33 @@ body.theme-light .ctrl-select,
 .repo-link:hover, .repo-link:focus-visible {
   color: var(--accent-color);
   text-decoration: underline;
+}
+
+.calm-reminder-notification {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 3;
+  max-width: min(360px, calc(100vw - 40px));
+  padding: 16px;
+  background: var(--control-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.calm-reminder-notification[hidden] {
+  display: none;
+}
+
+.calm-reminder-notification p {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.calm-reminder-notification .ctrl-btn {
+  padding: 2px 0;
 }
 
 .divider {

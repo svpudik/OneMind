@@ -37,6 +37,13 @@
 
     <span class="divider">|</span>
 
+    <label class="reminder-control">
+      <input id="calm-reminder" type="checkbox">
+      <span id="calm-reminder-label">30 min device reminder</span>
+    </label>
+
+    <span class="divider">|</span>
+
     <div class="control-group sound-control">
       <label for="sound-frequency" id="sound-label">Sound</label>
       <button id="sound-toggle" class="ctrl-btn sound-toggle" type="button" aria-pressed="false" aria-label="Toggle sound">🔇</button>
@@ -72,6 +79,10 @@
     <div class="phase-label" id="phase">...</div>
     <p class="thought-text" id="thought">...</p>
   </div>
+  <aside id="calm-reminder-notification" class="calm-reminder-notification" role="status" aria-live="polite" hidden>
+    <p id="calm-reminder-message">You have been here for 30 minutes. Take a moment to breathe and return to calm.</p>
+    <button id="calm-reminder-dismiss" class="ctrl-btn" type="button">Dismiss</button>
+  </aside>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

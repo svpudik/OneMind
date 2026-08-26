@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneMind — Return to Present</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Přepínač jazyka -->
+  <div class="lang-switch">
+    <button id="btn-cs" class="lang-btn active" onclick="setLanguage('cs')">CS</button>
+    <span class="divider">|</span>
+    <button id="btn-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
+  </div>
+
+  <div class="container">
+    <div class="breath-circle" id="circle"></div>
+    <div class="phase-label" id="phase">Nádech</div>
+    <p class="thought-text" id="thought">...</p>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

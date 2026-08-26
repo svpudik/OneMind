@@ -1,0 +1,26 @@
+.lang-switch {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.lang-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.lang-btn:hover, .lang-btn.active {
+  color: #38bdf8;
+}
+
+.divider {
+  color: #334155;
+}

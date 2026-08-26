@@ -50,7 +50,34 @@ let audioContext;
 let masterGain;
 let oscillator;
 let toneGain;
+let phaseGainSource;
+let pulseOscillator;
+let pulseGain;
 let audioGeneration = 0;
+const audioProfiles = {
+  '174': { carrier: 174, level: 0.78 },
+  '432': { carrier: 432, level: 0.52 },
+  '528': { carrier: 528, level: 0.68 },
+  '639': { carrier: 639, level: 0.48 },
+  '4': { carrier: 174, level: 0.5 }
+};
+
+function getPhaseAudioLevel() {
+  return { inhale: 1, exhale: 0.45, singularity: 0.05 }[currentPhaseKey] || 0.05;
+}
+
+function updateAudioPhase() {
+  if (!audioContext || !phaseGainSource) return;
+  const targetLevel = audioProfiles[audioSettings.frequency]?.level * getPhaseAudioLevel() || 0;
+  phaseGainSource.offset.cancelScheduledValues(audioContext.currentTime);
+  phaseGainSource.offset.setValueAtTime(phaseGainSource.offset.value, audioContext.currentTime);
+  phaseGainSource.offset.linearRampToValueAtTime(targetLevel, audioContext.currentTime + 0.35);
+  if (pulseGain) {
+    pulseGain.gain.cancelScheduledValues(audioContext.currentTime);
+    pulseGain.gain.setValueAtTime(pulseGain.gain.value, audioContext.currentTime);
+    pulseGain.gain.linearRampToValueAtTime(targetLevel * 0.35, audioContext.currentTime + 0.35);
+  }
+}
 
 function saveAudioSettings() {
   localStorage.setItem('onemind_audio_settings', JSON.stringify(audioSettings));
@@ -82,13 +109,20 @@ function stopSound() {
   if (!audioContext || !oscillator) return;
   const oldOscillator = oscillator;
   const oldToneGain = toneGain;
+  const oldPhaseGainSource = phaseGainSource;
+  const oldPulseOscillator = pulseOscillator;
   oscillator = undefined;
   toneGain = undefined;
+  phaseGainSource = undefined;
+  pulseOscillator = undefined;
+  pulseGain = undefined;
   const stopAt = audioContext.currentTime + 0.25;
   oldToneGain.gain.cancelScheduledValues(audioContext.currentTime);
   oldToneGain.gain.setValueAtTime(oldToneGain.gain.value, audioContext.currentTime);
   oldToneGain.gain.linearRampToValueAtTime(0, stopAt);
   oldOscillator.stop(stopAt + 0.02);
+  oldPhaseGainSource.stop(stopAt + 0.02);
+  if (oldPulseOscillator) oldPulseOscillator.stop(stopAt + 0.02);
 }
 
 function startSound() {
@@ -97,14 +131,26 @@ function startSound() {
   audioContext.resume().then(() => {
     if (generation !== audioGeneration || !audioSettings.enabled || audioSettings.frequency === 'off') return;
     stopSound();
+    const profile = audioProfiles[audioSettings.frequency];
     oscillator = audioContext.createOscillator();
     toneGain = audioContext.createGain();
+    phaseGainSource = audioContext.createConstantSource();
     oscillator.type = 'sine';
-    oscillator.frequency.value = Number(audioSettings.frequency);
-    toneGain.gain.setValueAtTime(0, audioContext.currentTime);
-    toneGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.35);
+    oscillator.frequency.value = profile.carrier;
+    phaseGainSource.offset.value = 0;
+    phaseGainSource.connect(toneGain.gain);
     oscillator.connect(toneGain).connect(masterGain);
+    if (audioSettings.frequency === '4') {
+      pulseOscillator = audioContext.createOscillator();
+      pulseGain = audioContext.createGain();
+      pulseOscillator.frequency.value = 4;
+      pulseGain.gain.value = 0;
+      pulseOscillator.connect(pulseGain).connect(toneGain.gain);
+      pulseOscillator.start();
+    }
+    phaseGainSource.start();
     oscillator.start();
+    updateAudioPhase();
   }).catch(() => updateSoundUI());
 }
 
@@ -179,6 +225,7 @@ function startBreathCycle() {
 
   // 1. Nádech
   currentPhaseKey = 'inhale';
+  updateAudioPhase();
   circle.style.transform = 'scale(1.8)';
   circle.style.opacity = '1';
   phaseLabel.innerText = translations[currentLang].inhale;
@@ -186,6 +233,7 @@ function startBreathCycle() {
   cycleTimeouts.push(setTimeout(() => {
     // 2. Výdech
     currentPhaseKey = 'exhale';
+    updateAudioPhase();
     circle.style.transform = 'scale(0.8)';
     circle.style.opacity = '0.4';
     phaseLabel.innerText = translations[currentLang].exhale;
@@ -193,6 +241,7 @@ function startBreathCycle() {
     cycleTimeouts.push(setTimeout(() => {
       // 3. Singularita
       currentPhaseKey = 'singularity';
+      updateAudioPhase();
       phaseLabel.innerText = translations[currentLang].singularity;
       showNextThought();
 

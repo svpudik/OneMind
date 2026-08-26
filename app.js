@@ -281,9 +281,21 @@ fetch('./data/thoughts.json')
   .then(res => res.json())
   .then(data => {
     thoughts = data;
+    shuffleThoughts();
     updateLangUI();
     startBreathCycle();
   });
+
+function shuffleThoughts(previousThoughtId) {
+  for (let index = thoughts.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [thoughts[index], thoughts[randomIndex]] = [thoughts[randomIndex], thoughts[index]];
+  }
+
+  if (previousThoughtId !== undefined && thoughts.length > 1 && thoughts[0].id === previousThoughtId) {
+    [thoughts[0], thoughts[1]] = [thoughts[1], thoughts[0]];
+  }
+}
 
 function showCurrentThought() {
   if (thoughts.length === 0) return;
@@ -294,7 +306,13 @@ function showNextThought() {
   if (thoughts.length === 0) return;
   thoughtEl.style.opacity = '0';
   setTimeout(() => {
-    currentThoughtIndex = (currentThoughtIndex + 1) % thoughts.length;
+    if (currentThoughtIndex === thoughts.length - 1) {
+      const previousThoughtId = thoughts[currentThoughtIndex].id;
+      shuffleThoughts(previousThoughtId);
+      currentThoughtIndex = 0;
+    } else {
+      currentThoughtIndex += 1;
+    }
     showCurrentThought();
     thoughtEl.style.opacity = '1';
   }, 1000);

@@ -104,5 +104,11 @@ function setTheme(theme) {
   applyTheme(theme);
 }
 
+document.getElementById('btn-theme-auto').addEventListener('click', () => setTheme('auto'));
+document.getElementById('btn-theme-dark').addEventListener('click', () => setTheme('dark'));
+document.getElementById('btn-theme-light').addEventListener('click', () => setTheme('light'));
+document.getElementById('btn-cs').addEventListener('click', () => setLanguage('cs'));
+document.getElementById('btn-en').addEventListener('click', () => setLanguage('en'));
+
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);

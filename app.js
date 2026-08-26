@@ -84,6 +84,7 @@ let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
 
 function applyTheme(theme) {
   document.body.classList.remove('theme-dark', 'theme-light');
+  document.documentElement.dataset.theme = theme;
   
   if (theme === 'dark') {
     document.body.classList.add('theme-dark');

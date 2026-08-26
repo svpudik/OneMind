@@ -196,6 +196,9 @@ body {
   top: 20px;
   right: 20px;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .settings-toggle {
@@ -314,6 +317,18 @@ body.theme-light .ctrl-select,
 
 .ctrl-btn:hover, .ctrl-btn.active {
   color: var(--accent-color);
+}
+
+.repo-link {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.repo-link:hover, .repo-link:focus-visible {
+  color: var(--accent-color);
+  text-decoration: underline;
 }
 
 .divider {

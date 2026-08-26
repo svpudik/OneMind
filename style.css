@@ -37,6 +37,7 @@
   --accent-color: #38bdf8;
   --divider-color: #334155;
   --btn-inactive: #64748b;
+  --control-bg: #111827;
 }
 
 /* Automatická detekce motivu OS uživatele */
@@ -52,6 +53,7 @@
     --accent-color: #0284c7;
     --divider-color: #cbd5e1;
     --btn-inactive: #94a3b8;
+    --control-bg: #ffffff;
   }
 }
 
@@ -70,6 +72,12 @@
   }
 }
 
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] .ctrl-select {
+    color-scheme: light;
+  }
+}
+
 /* Třídy pro manuální přepnutí z zobrazení (override) */
 body.theme-dark {
   --bg-color: #0b0f19;
@@ -82,6 +90,7 @@ body.theme-dark {
   --accent-color: #38bdf8;
   --divider-color: #334155;
   --btn-inactive: #64748b;
+  --control-bg: #111827;
 }
 
 body.theme-light {
@@ -95,6 +104,7 @@ body.theme-light {
   --accent-color: #0284c7;
   --divider-color: #cbd5e1;
   --btn-inactive: #94a3b8;
+  --control-bg: #ffffff;
 }
 
 :root[data-theme="dark"] body {
@@ -108,6 +118,7 @@ body.theme-light {
   --accent-color: #38bdf8;
   --divider-color: #334155;
   --btn-inactive: #64748b;
+  --control-bg: #111827;
 }
 
 :root[data-theme="light"] body {
@@ -121,6 +132,7 @@ body.theme-light {
   --accent-color: #0284c7;
   --divider-color: #cbd5e1;
   --btn-inactive: #94a3b8;
+  --control-bg: #ffffff;
 }
 
 * {
@@ -236,13 +248,24 @@ body {
 }
 
 .ctrl-select {
-  background: transparent;
+  background-color: var(--control-bg);
   border: 1px solid var(--divider-color);
   border-radius: 4px;
   color: var(--text-primary);
   cursor: pointer;
   padding: 4px 6px;
   max-width: 170px;
+  color-scheme: dark;
+}
+
+body.theme-light .ctrl-select,
+:root[data-theme="light"] .ctrl-select {
+  color-scheme: light;
+}
+
+.ctrl-select option {
+  background-color: var(--control-bg);
+  color: var(--text-primary);
 }
 
 .volume-control {

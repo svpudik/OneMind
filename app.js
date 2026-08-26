@@ -11,22 +11,20 @@ const translations = {
     inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Singularita",
     pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
-      432: "432 Hz — Přírodní klid",
-      528: "528 Hz — Přítomnost a proměna",
-      639: "639 Hz — Spojení a soucit (Mettá)",
-      174: "174 Hz — Základ a úleva od stresu",
-      4: "4 Hz — Hluboké ticho a singularita"
+      brown: "Hnědý šum — Hluboké soustředění",
+      432: "432 Hz harmonický — Přirozený klid",
+      528: "528 Hz harmonický — Proměna",
+      4: "4 Hz binaurální delta — Singularita"
     }
   },
   en: {
     inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Singularity",
     pace: "Pace", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
-      432: "432 Hz — Natural Clarity & Harmony",
-      528: "528 Hz — Presence & Transformation",
-      639: "639 Hz — Connection & Compassion (Mettá)",
-      174: "174 Hz — Foundation & Stress Relief",
-      4: "4 Hz — Deep Silence & Singularity"
+      brown: "Brown Noise — Deep Focus",
+      432: "432 Hz Harmonic — Natural Calm",
+      528: "528 Hz Harmonic — Transformation",
+      4: "4 Hz Delta Binaural — Singularity"
     }
   }
 };
@@ -40,7 +38,7 @@ try {
 } catch {
   localStorage.removeItem('onemind_audio_settings');
 }
-const validFrequencies = ['off', '432', '528', '639', '174', '4'];
+const validFrequencies = ['off', 'brown', '432', '528', '4'];
 if (!validFrequencies.includes(String(audioSettings.frequency))) audioSettings.frequency = 'off';
 audioSettings.frequency = String(audioSettings.frequency);
 audioSettings.volume = Math.min(1, Math.max(0, Number(audioSettings.volume) || 0));
@@ -48,18 +46,16 @@ audioSettings.enabled = Boolean(audioSettings.enabled) && audioSettings.frequenc
 
 let audioContext;
 let masterGain;
-let oscillator;
 let toneGain;
 let phaseGainSource;
-let pulseOscillator;
-let pulseGain;
+let sourceGain;
+let audioSources = [];
 let audioGeneration = 0;
 const audioProfiles = {
-  '174': { carrier: 174, level: 0.78 },
-  '432': { carrier: 432, level: 0.52 },
-  '528': { carrier: 528, level: 0.68 },
-  '639': { carrier: 639, level: 0.48 },
-  '4': { carrier: 174, level: 0.5 }
+  brown: { level: 0.42 },
+  '432': { level: 0.32 },
+  '528': { level: 0.3 },
+  '4': { level: 0.26 }
 };
 
 function getPhaseAudioLevel() {
@@ -68,15 +64,10 @@ function getPhaseAudioLevel() {
 
 function updateAudioPhase() {
   if (!audioContext || !phaseGainSource) return;
-  const targetLevel = audioProfiles[audioSettings.frequency]?.level * getPhaseAudioLevel() || 0;
+  const targetLevel = getPhaseAudioLevel();
   phaseGainSource.offset.cancelScheduledValues(audioContext.currentTime);
   phaseGainSource.offset.setValueAtTime(phaseGainSource.offset.value, audioContext.currentTime);
   phaseGainSource.offset.linearRampToValueAtTime(targetLevel, audioContext.currentTime + 0.35);
-  if (pulseGain) {
-    pulseGain.gain.cancelScheduledValues(audioContext.currentTime);
-    pulseGain.gain.setValueAtTime(pulseGain.gain.value, audioContext.currentTime);
-    pulseGain.gain.linearRampToValueAtTime(targetLevel * 0.35, audioContext.currentTime + 0.35);
-  }
 }
 
 function saveAudioSettings() {
@@ -106,23 +97,60 @@ function ensureAudioContext() {
 }
 
 function stopSound() {
-  if (!audioContext || !oscillator) return;
-  const oldOscillator = oscillator;
+  if (!audioContext || !phaseGainSource) return;
+  const oldSources = audioSources;
   const oldToneGain = toneGain;
   const oldPhaseGainSource = phaseGainSource;
-  const oldPulseOscillator = pulseOscillator;
-  oscillator = undefined;
+  const oldSourceGain = sourceGain;
+  audioSources = [];
   toneGain = undefined;
   phaseGainSource = undefined;
-  pulseOscillator = undefined;
-  pulseGain = undefined;
+  sourceGain = undefined;
   const stopAt = audioContext.currentTime + 0.25;
   oldToneGain.gain.cancelScheduledValues(audioContext.currentTime);
   oldToneGain.gain.setValueAtTime(oldToneGain.gain.value, audioContext.currentTime);
   oldToneGain.gain.linearRampToValueAtTime(0, stopAt);
-  oldOscillator.stop(stopAt + 0.02);
+  oldSources.forEach(source => source.stop(stopAt + 0.02));
   oldPhaseGainSource.stop(stopAt + 0.02);
-  if (oldPulseOscillator) oldPulseOscillator.stop(stopAt + 0.02);
+  oldSourceGain.disconnect();
+}
+
+function createNoiseBuffer(type = 'brown') {
+  const bufferLength = audioContext.sampleRate * 2;
+  const buffer = audioContext.createBuffer(1, bufferLength, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+  let brownValue = 0;
+  let pinkB0 = 0;
+  let pinkB1 = 0;
+  let pinkB2 = 0;
+  let pinkB3 = 0;
+  let pinkB4 = 0;
+  let pinkB5 = 0;
+  for (let index = 0; index < bufferLength; index += 1) {
+    const whiteValue = Math.random() * 2 - 1;
+    if (type === 'pink') {
+      pinkB0 = 0.99886 * pinkB0 + whiteValue * 0.0555179;
+      pinkB1 = 0.99332 * pinkB1 + whiteValue * 0.0750759;
+      pinkB2 = 0.96900 * pinkB2 + whiteValue * 0.1538520;
+      pinkB3 = 0.86650 * pinkB3 + whiteValue * 0.3104856;
+      pinkB4 = 0.55000 * pinkB4 + whiteValue * 0.5329522;
+      pinkB5 = -0.7616 * pinkB5 - whiteValue * 0.0168980;
+      data[index] = (pinkB0 + pinkB1 + pinkB2 + pinkB3 + pinkB4 + pinkB5 + whiteValue * 0.5362) * 0.11;
+    } else {
+      brownValue = (brownValue + whiteValue * 0.02) / 1.02;
+      data[index] = brownValue * 3.5;
+    }
+  }
+  return buffer;
+}
+
+function createHarmonicOscillators(frequency) {
+  return [frequency, frequency / 2, frequency * 1.5].map((value, index) => {
+    const harmonic = audioContext.createOscillator();
+    harmonic.type = index === 1 ? 'sine' : 'triangle';
+    harmonic.frequency.value = value;
+    return harmonic;
+  });
 }
 
 function startSound() {
@@ -132,24 +160,42 @@ function startSound() {
     if (generation !== audioGeneration || !audioSettings.enabled || audioSettings.frequency === 'off') return;
     stopSound();
     const profile = audioProfiles[audioSettings.frequency];
-    oscillator = audioContext.createOscillator();
     toneGain = audioContext.createGain();
+    sourceGain = audioContext.createGain();
     phaseGainSource = audioContext.createConstantSource();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = profile.carrier;
+    sourceGain.gain.value = profile.level;
     phaseGainSource.offset.value = 0;
     phaseGainSource.connect(toneGain.gain);
-    oscillator.connect(toneGain).connect(masterGain);
-    if (audioSettings.frequency === '4') {
-      pulseOscillator = audioContext.createOscillator();
-      pulseGain = audioContext.createGain();
-      pulseOscillator.frequency.value = 4;
-      pulseGain.gain.value = 0;
-      pulseOscillator.connect(pulseGain).connect(toneGain.gain);
-      pulseOscillator.start();
+    sourceGain.connect(toneGain).connect(masterGain);
+    if (audioSettings.frequency === 'brown') {
+      const noiseSource = audioContext.createBufferSource();
+      const lowPass = audioContext.createBiquadFilter();
+      noiseSource.buffer = createNoiseBuffer();
+      noiseSource.loop = true;
+      lowPass.type = 'lowpass';
+      lowPass.frequency.value = 400;
+      lowPass.Q.value = 0.7;
+      noiseSource.connect(lowPass).connect(sourceGain);
+      audioSources.push(noiseSource);
+    } else if (audioSettings.frequency === '4') {
+      const merger = audioContext.createChannelMerger(2);
+      const left = audioContext.createOscillator();
+      const right = audioContext.createOscillator();
+      left.type = 'sine';
+      right.type = 'sine';
+      left.frequency.value = 174;
+      right.frequency.value = 178;
+      left.connect(merger, 0, 0);
+      right.connect(merger, 0, 1);
+      merger.connect(sourceGain);
+      audioSources.push(left, right);
+    } else {
+      const harmonics = createHarmonicOscillators(Number(audioSettings.frequency));
+      harmonics.forEach(harmonic => harmonic.connect(sourceGain));
+      audioSources.push(...harmonics);
     }
     phaseGainSource.start();
-    oscillator.start();
+    audioSources.forEach(source => source.start());
     updateAudioPhase();
   }).catch(() => updateSoundUI());
 }

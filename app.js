@@ -8,7 +8,7 @@ const thoughtEl = document.getElementById('thought');
 
 const translations = {
   cs: {
-    inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Singularita",
+    inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Zadržení (Singularita)",
     pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto", calmReminder: "Připomenout klid po 30 min", dismiss: "Zavřít",
     frequencies: {
       brown: "Hnědý šum — Hluboké soustředění",
@@ -18,7 +18,7 @@ const translations = {
     }
   },
   en: {
-    inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Singularity",
+    inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Hold (Singularity)",
     pace: "Pace", sound: "Sound", volume: "Volume", off: "Off", calmReminder: "30 min device reminder", dismiss: "Dismiss",
     frequencies: {
       brown: "Brown Noise — Deep Focus",

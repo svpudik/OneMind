@@ -8,11 +8,10 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🌟 Key Features
 
-* **Breath & Singularity Visualizer:** Synchronizes visual feedback with a 4-phase breathing cycle[cite: 1]:
+* **Breath & Singularity Visualizer:** Synchronizes visual feedback with a 3-phase breathing cycle[cite: 1]:
   * **Inhale:** Fullness / Openness to space[cite: 1].
-  * **Hold (In):** Resting in fullness.
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].
-  * **Singularity (Hold Out):** Silent, effortless point of pure being[cite: 1].
+  * **Hold (Singularity):** Silent, effortless point of pure being[cite: 1].
 * **Bilingual Support (i18n):** Seamlessly toggle between Czech (CS) and English (EN) with automatic system language detection[cite: 1].
 * **Ambient Audio:** Optional native Web Audio modes include Brown Noise (Deep Focus), 432 Hz Harmonic (Natural Calm), 528 Hz Harmonic (Transformation), and 4 Hz Delta Binaural (Singularity), with master volume control.
 * **Evening-Friendly Themes:** Auto mode uses blue during daytime and switches to a low-luminance red theme one hour before sunset. Manual Dark (red evening), Blue, and Light themes are also available.

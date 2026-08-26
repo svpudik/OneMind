@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "OneMind — Return to Present",
+  "version": "1.0.0",
+  "description": "Secular focus and breathing tool to settle mental noise and return to the present moment.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

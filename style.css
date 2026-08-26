@@ -157,7 +157,7 @@ body {
   background: radial-gradient(circle, var(--circle-gradient-start) 0%, var(--circle-gradient-end) 70%);
   border: 1px solid var(--circle-border);
   box-shadow: 0 0 30px var(--circle-shadow);
-  transition: transform 4s ease-in-out, opacity 4s ease-in-out;
+  transition: transform var(--breath-duration, 4s) ease-in-out, opacity var(--breath-duration, 4s) ease-in-out;
   margin-bottom: 30px;
 }
 
@@ -193,6 +193,24 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
+}
+
+.breath-control label {
+  color: var(--text-secondary);
+}
+
+.ctrl-select {
+  background: transparent;
+  border: 1px solid var(--divider-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.ctrl-select:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 .ctrl-btn {

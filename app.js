@@ -12,11 +12,14 @@ const translations = {
 };
 
 let currentPhaseKey = 'inhale';
+let breathInterval = Number(localStorage.getItem('onemind_breath_interval')) || 4;
+let cycleTimeouts = [];
 
 function updateLangUI() {
   document.getElementById('btn-cs').classList.toggle('active', currentLang === 'cs');
   document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
   document.documentElement.lang = currentLang;
+  document.getElementById('breath-interval-label').innerText = currentLang === 'cs' ? 'Tempo' : 'Pace';
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
 }
@@ -52,32 +55,37 @@ function showNextThought() {
 }
 
 function startBreathCycle() {
+  cycleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  cycleTimeouts = [];
+  const intervalMs = breathInterval * 1000;
+  document.documentElement.style.setProperty('--breath-duration', `${breathInterval}s`);
+
   // 1. Nádech
   currentPhaseKey = 'inhale';
   circle.style.transform = 'scale(1.8)';
   circle.style.opacity = '1';
   phaseLabel.innerText = translations[currentLang].inhale;
 
-  setTimeout(() => {
+  cycleTimeouts.push(setTimeout(() => {
     // 2. Výdech
     currentPhaseKey = 'exhale';
     circle.style.transform = 'scale(0.8)';
     circle.style.opacity = '0.4';
     phaseLabel.innerText = translations[currentLang].exhale;
 
-    setTimeout(() => {
+    cycleTimeouts.push(setTimeout(() => {
       // 3. Singularita
       currentPhaseKey = 'singularity';
       phaseLabel.innerText = translations[currentLang].singularity;
       showNextThought();
 
-      setTimeout(() => {
+      cycleTimeouts.push(setTimeout(() => {
         startBreathCycle();
-      }, 2000);
+      }, 2000));
 
-    }, 4000);
+    }, intervalMs));
 
-  }, 4000);
+  }, intervalMs));
 }
 // Správa témat
 let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
@@ -109,6 +117,13 @@ document.getElementById('btn-theme-dark').addEventListener('click', () => setThe
 document.getElementById('btn-theme-light').addEventListener('click', () => setTheme('light'));
 document.getElementById('btn-cs').addEventListener('click', () => setLanguage('cs'));
 document.getElementById('btn-en').addEventListener('click', () => setLanguage('en'));
+const breathIntervalSelect = document.getElementById('breath-interval');
+breathIntervalSelect.value = String(breathInterval);
+breathIntervalSelect.addEventListener('change', event => {
+  breathInterval = Number(event.target.value);
+  localStorage.setItem('onemind_breath_interval', String(breathInterval));
+  startBreathCycle();
+});
 
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);

@@ -79,3 +79,29 @@ function startBreathCycle() {
 
   }, 4000);
 }
+// Správa témat
+let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
+
+function applyTheme(theme) {
+  document.body.classList.remove('theme-dark', 'theme-light');
+  
+  if (theme === 'dark') {
+    document.body.classList.add('theme-dark');
+  } else if (theme === 'light') {
+    document.body.classList.add('theme-light');
+  }
+  // Pokud je theme === 'auto', o vše se stará CSS media query @media (prefers-color-scheme: light)
+
+  document.getElementById('btn-theme-auto').classList.toggle('active', theme === 'auto');
+  document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
+  document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
+}
+
+function setTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem('onemind_theme', theme);
+  applyTheme(theme);
+}
+
+// Spustit nastavení tématu při načtení
+applyTheme(currentTheme);

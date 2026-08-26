@@ -7,16 +7,29 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Přepínač jazyka -->
-  <div class="lang-switch">
-    <button id="btn-cs" class="lang-btn active" onclick="setLanguage('cs')">CS</button>
+  <div class="top-controls">
+    <!-- Přepínač T tématu -->
+    <div class="control-group">
+      <button id="btn-theme-auto" class="ctrl-btn active" onclick="setTheme('auto')">Auto</button>
+      <span class="divider">|</span>
+      <button id="btn-theme-dark" class="ctrl-btn" onclick="setTheme('dark')">🌙</button>
+      <span class="divider">|</span>
+      <button id="btn-theme-light" class="ctrl-btn" onclick="setTheme('light')">☀️</button>
+    </div>
+
     <span class="divider">|</span>
-    <button id="btn-en" class="lang-btn" onclick="setLanguage('en')">EN</button>
+
+    <!-- Přepínač Jazyka -->
+    <div class="control-group">
+      <button id="btn-cs" class="ctrl-btn" onclick="setLanguage('cs')">CS</button>
+      <span class="divider">|</span>
+      <button id="btn-en" class="ctrl-btn" onclick="setLanguage('en')">EN</button>
+    </div>
   </div>
 
   <div class="container">
     <div class="breath-circle" id="circle"></div>
-    <div class="phase-label" id="phase">Nádech</div>
+    <div class="phase-label" id="phase">...</div>
     <p class="thought-text" id="thought">...</p>
   </div>
   <script src="app.js"></script>

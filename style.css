@@ -183,9 +183,45 @@ body {
   position: absolute;
   top: 20px;
   right: 20px;
+  z-index: 2;
+}
+
+.settings-toggle {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--divider-color);
+  border-radius: 50%;
+  color: var(--btn-inactive);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.settings-toggle:hover, .settings-toggle:focus-visible {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.settings-toggle[aria-expanded="true"] {
+  color: var(--accent-color);
+  transform: rotate(45deg);
+}
+
+.settings-panel {
   display: flex;
   align-items: center;
   gap: 15px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg-color);
+  border: 1px solid var(--divider-color);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.settings-panel[hidden] {
+  display: none;
 }
 
 .control-group {
@@ -206,6 +242,37 @@ body {
   color: var(--text-primary);
   cursor: pointer;
   padding: 4px 6px;
+  max-width: 170px;
+}
+
+.volume-control {
+  accent-color: var(--accent-color);
+  cursor: pointer;
+  width: 72px;
+}
+
+.sound-toggle {
+  font-size: 1rem;
+  padding: 0 2px;
+}
+
+@media (max-width: 700px) {
+  .settings-panel {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .settings-panel > .divider {
+    display: none;
+  }
+
+  .sound-control {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .ctrl-select:focus-visible {

@@ -11,6 +11,8 @@
 </head>
 <body>
   <div class="top-controls">
+    <button id="settings-toggle" class="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings">⚙</button>
+    <div id="settings-panel" class="settings-panel" hidden>
     <!-- Přepínač T tématu -->
     <div class="control-group">
       <button id="btn-theme-auto" class="ctrl-btn active" type="button">Auto</button>
@@ -35,11 +37,29 @@
 
     <span class="divider">|</span>
 
+    <div class="control-group sound-control">
+      <label for="sound-frequency" id="sound-label">Sound</label>
+      <button id="sound-toggle" class="ctrl-btn sound-toggle" type="button" aria-pressed="false" aria-label="Toggle sound">🔇</button>
+      <select id="sound-frequency" class="ctrl-select" aria-label="Sound frequency">
+        <option value="off">Off</option>
+        <option value="432">432 Hz</option>
+        <option value="528">528 Hz</option>
+        <option value="639">639 Hz</option>
+        <option value="174">174 Hz</option>
+        <option value="4">4 Hz</option>
+      </select>
+      <label for="sound-volume" id="volume-label">Volume</label>
+      <input id="sound-volume" class="volume-control" type="range" min="0" max="100" value="35" aria-label="Volume">
+    </div>
+
+    <span class="divider">|</span>
+
     <!-- Přepínač Jazyka -->
     <div class="control-group">
       <button id="btn-cs" class="ctrl-btn" type="button">CS</button>
       <span class="divider">|</span>
       <button id="btn-en" class="ctrl-btn" type="button">EN</button>
+    </div>
     </div>
   </div>
 

@@ -85,8 +85,9 @@ let phaseGainSource;
 let sourceGain;
 let audioSources = [];
 let audioGeneration = 0;
+let gongVariationIndex = 0;
 const audioProfiles = {
-  forest: { level: 0.2 }
+  forest: { level: 0.22 }
 };
 
 function getPhaseAudioLevel() {
@@ -104,13 +105,15 @@ function updateAudioPhase() {
 function playCycleGong() {
   if (!audioSettings.enabled || !audioContext || audioContext.state !== 'running') return;
   const now = audioContext.currentTime;
+  const gongTones = [[392, 587], [415, 622], [440, 659], [370, 554]][gongVariationIndex % 4];
+  gongVariationIndex += 1;
   const gongGain = audioContext.createGain();
   gongGain.gain.setValueAtTime(0.0001, now);
   gongGain.gain.exponentialRampToValueAtTime(Math.max(0.0001, audioSettings.volume * 0.16), now + 0.015);
   gongGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
   gongGain.connect(masterGain);
 
-  [392, 587].forEach((frequency, index) => {
+  gongTones.forEach((frequency, index) => {
     const gong = audioContext.createOscillator();
     gong.type = 'sine';
     gong.frequency.value = frequency;
@@ -210,10 +213,10 @@ function startSound() {
       noiseSource.buffer = createNoiseBuffer();
       noiseSource.loop = true;
       highPass.type = 'highpass';
-      highPass.frequency.value = 90;
+      highPass.frequency.value = 45;
       highPass.Q.value = 0.4;
       lowPass.type = 'lowpass';
-      lowPass.frequency.value = 850;
+      lowPass.frequency.value = 480;
       lowPass.Q.value = 0.5;
       noiseSource.connect(highPass).connect(lowPass).connect(sourceGain);
       audioSources.push(noiseSource);

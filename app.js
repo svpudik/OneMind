@@ -9,7 +9,8 @@ const thoughtEl = document.getElementById('thought');
 const translations = {
   cs: {
     inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Zadržení (Singularita)",
-    pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
+    pace: "Tempo", technique: "Technika", warmup: "Zahřátí", mainCycle: "Hlavní cyklus", cooldown: "Zklidnění",
+    relax: "Uvolnění a soustředění", coherence: "Koherence", tranquility: "Klid", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
       brown: "Hnědý šum — Hluboké soustředění",
       432: "432 Hz harmonický — Přirozený klid",
@@ -19,7 +20,8 @@ const translations = {
   },
   en: {
     inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Hold (Singularity)",
-    pace: "Pace", sound: "Sound", volume: "Volume", off: "Off",
+    pace: "Pace", technique: "Technique", warmup: "Warm-up", mainCycle: "Main Cycle", cooldown: "Cooldown",
+    relax: "Relax and Focus", coherence: "Coherence", tranquility: "Tranquility", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
       brown: "Brown Noise — Deep Focus",
       432: "432 Hz Harmonic — Natural Calm",
@@ -30,7 +32,28 @@ const translations = {
 };
 
 let currentPhaseKey = 'inhale';
-let breathInterval = Number(localStorage.getItem('onemind_breath_interval')) || 4;
+let selectedTechnique = localStorage.getItem('onemind_breath_technique') || 'relax';
+const techniques = {
+  relax: {
+    warmup: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60],
+    main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'singularity', seconds: 4, scale: 1.8 }, { key: 'exhale', seconds: 4, scale: 0.8 }, { key: 'singularity', seconds: 4, scale: 0.8 }],
+    mainMinutes: 13,
+    cooldown: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
+  },
+  coherence: {
+    warmup: [[[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60], [[{ key: 'inhale', seconds: 5 }, { key: 'exhale', seconds: 5 }], 60]],
+    main: [{ key: 'inhale', seconds: 6 }, { key: 'exhale', seconds: 6 }],
+    mainMinutes: 11,
+    cooldown: [[{ key: 'inhale', seconds: 5 }, { key: 'exhale', seconds: 5 }], 60, [{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
+  },
+  tranquility: {
+    warmup: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60],
+    main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'singularity', seconds: 7, scale: 1.8 }, { key: 'exhale', seconds: 8, scale: 0.8 }],
+    mainMinutes: 9,
+    cooldown: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
+  }
+};
+if (!techniques[selectedTechnique]) selectedTechnique = 'relax';
 let cycleTimeouts = [];
 let audioSettings = { enabled: false, frequency: 'off', volume: 0.35 };
 try {
@@ -214,11 +237,12 @@ function updateLangUI() {
   document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
   document.documentElement.lang = currentLang;
   const language = translations[currentLang];
-  document.getElementById('breath-interval-label').innerText = language.pace;
+  document.getElementById('breath-technique-label').innerText = language.technique;
   document.getElementById('sound-label').innerText = language.sound;
   document.getElementById('volume-label').innerText = language.volume;
   document.getElementById('sound-toggle').setAttribute('aria-label', `${language.sound}: ${audioSettings.enabled ? language.off : language.sound}`);
   updateFrequencyOptions();
+  updateTechniqueOptions();
   updateSoundUI();
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
@@ -231,6 +255,14 @@ function updateFrequencyOptions() {
   Object.keys(language.frequencies).forEach((frequency, index) => {
     frequencySelect.options[index + 1].text = language.frequencies[frequency];
   });
+}
+
+function updateTechniqueOptions() {
+  const language = translations[currentLang];
+  const techniqueSelect = document.getElementById('breath-technique');
+  techniqueSelect.options[0].text = language.relax;
+  techniqueSelect.options[1].text = language.coherence;
+  techniqueSelect.options[2].text = language.tranquility;
 }
 
 function setLanguage(lang) {
@@ -281,41 +313,66 @@ function showNextThought() {
   }, 1000);
 }
 
+function vibrateOnTransition() {
+  if ('vibrate' in navigator) navigator.vibrate(35);
+}
+
+function expandSteps(steps, durationSeconds) {
+  const expanded = [];
+  let elapsed = 0;
+  while (elapsed < durationSeconds) {
+    for (const step of steps) {
+      if (elapsed >= durationSeconds) break;
+      expanded.push(step);
+      elapsed += step.seconds;
+    }
+  }
+  return expanded;
+}
+
+function expandBlocks(blocks) {
+  const expanded = [];
+  for (let index = 0; index < blocks.length; index += 2) {
+    expanded.push(...expandSteps(blocks[index], blocks[index + 1]));
+  }
+  return expanded;
+}
+
 function startBreathCycle() {
   cycleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
   cycleTimeouts = [];
-  const intervalMs = breathInterval * 1000;
-  document.documentElement.style.setProperty('--breath-duration', `${breathInterval}s`);
+  const technique = techniques[selectedTechnique];
+  const language = translations[currentLang];
+  const warmupDuration = 60;
+  const mainDuration = technique.mainMinutes * 60;
+  const steps = [
+    ...expandBlocks(technique.warmup),
+    ...expandSteps(technique.main, mainDuration),
+    ...expandBlocks(technique.cooldown)
+  ];
+  let stepIndex = 0;
+  let sessionElapsed = 0;
 
-  // 1. Nádech
-  currentPhaseKey = 'inhale';
-  updateAudioPhase();
-  circle.style.transform = 'scale(1.8)';
-  circle.style.opacity = '1';
-  phaseLabel.innerText = translations[currentLang].inhale;
-
-  cycleTimeouts.push(setTimeout(() => {
-    // 2. Výdech
-    currentPhaseKey = 'exhale';
+  const runStep = () => {
+    const step = steps[stepIndex];
+    const section = sessionElapsed < warmupDuration ? 'warmup' : sessionElapsed < warmupDuration + mainDuration ? 'mainCycle' : 'cooldown';
+    currentPhaseKey = step.key;
     updateAudioPhase();
-    circle.style.transform = 'scale(0.8)';
-    circle.style.opacity = '0.4';
-    phaseLabel.innerText = translations[currentLang].exhale;
-
+    document.documentElement.style.setProperty('--breath-duration', `${step.seconds}s`);
+    circle.style.transform = `scale(${step.scale || (step.key === 'inhale' ? 1.8 : 0.8)})`;
+    circle.style.opacity = step.key === 'inhale' ? '1' : step.key === 'exhale' ? '0.4' : '0.7';
+    phaseLabel.innerText = `${language[section]} · ${language[step.key]}`;
+    if (stepIndex > 0) vibrateOnTransition();
+    if (step.key === 'singularity') showNextThought();
+    sessionElapsed += step.seconds;
+    stepIndex += 1;
     cycleTimeouts.push(setTimeout(() => {
-      // 3. Singularita
-      currentPhaseKey = 'singularity';
-      updateAudioPhase();
-      phaseLabel.innerText = translations[currentLang].singularity;
-      showNextThought();
+      if (stepIndex < steps.length) runStep();
+      else startBreathCycle();
+    }, step.seconds * 1000));
+  };
 
-      cycleTimeouts.push(setTimeout(() => {
-        startBreathCycle();
-      }, 2000));
-
-    }, intervalMs));
-
-  }, intervalMs));
+  runStep();
 }
 // Správa témat
 let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
@@ -487,11 +544,11 @@ document.addEventListener('touchcancel', () => {
   pullRefreshIndicator.classList.remove('active', 'ready');
   pullRefreshIndicator.style.transform = '';
 }, { passive: true });
-const breathIntervalSelect = document.getElementById('breath-interval');
-breathIntervalSelect.value = String(breathInterval);
-breathIntervalSelect.addEventListener('change', event => {
-  breathInterval = Number(event.target.value);
-  localStorage.setItem('onemind_breath_interval', String(breathInterval));
+const breathTechniqueSelect = document.getElementById('breath-technique');
+breathTechniqueSelect.value = selectedTechnique;
+breathTechniqueSelect.addEventListener('change', event => {
+  selectedTechnique = event.target.value;
+  localStorage.setItem('onemind_breath_technique', selectedTechnique);
   startBreathCycle();
 });
 const soundToggle = document.getElementById('sound-toggle');

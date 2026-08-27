@@ -10,6 +10,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🌟 Key Features
 
+* **Guided Breathing Techniques:** Choose Relax and Focus (box breathing), Coherence (gradual 4/5/6-second pacing), or Tranquility (4-7-8 breathing). Each session includes a warm-up, main cycle, and cooldown, with gentle vibration at each breath transition on supported devices.
 * **Breath & Singularity Visualizer:** Synchronizes visual feedback with a 3-phase breathing cycle[cite: 1]:
   * **Inhale:** Fullness / Openness to space[cite: 1].
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].
@@ -25,7 +26,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🎛️ Controls
 
-Open the settings button to adjust the breathing pace, ambient sound, volume, language, and theme. On mobile, pull down from the top edge by at least 80 pixels to reload the application when needed.
+Open the settings button to choose a breathing technique, adjust ambient sound, volume, language, and theme. On supported mobile devices, each phase transition gives a gentle vibration. Pull down from the top edge by at least 80 pixels to reload the application when needed.
 
 Location is optional and is used only by Auto theme to calculate local sunrise and sunset, so OneMind can switch from blue to red one hour before sunset. Location is not required for the breathing exercise or ambient audio. The coordinates are used locally in the browser, are not collected, stored, or sent to any server, and Auto theme falls back to a 19:00–07:00 local-time schedule if permission is denied.
 

@@ -583,6 +583,7 @@ breathTechniqueSelect.value = selectedTechnique;
 breathTechniqueSelect.addEventListener('change', event => {
   selectedTechnique = event.target.value;
   localStorage.setItem('onemind_breath_technique', selectedTechnique);
+  updateTechniqueOptions();
   startBreathCycle();
 });
 document.getElementById('breath-play-pause').addEventListener('click', () => {

@@ -325,6 +325,7 @@ body[data-theme="light"] {
 .breath-action-btn[data-state="pause"]::before {
   width: 9px;
   height: 13px;
+  transform: translateY(-1px);
   background: linear-gradient(to right, currentColor 0 3px, transparent 3px 6px, currentColor 6px 9px);
 }
 

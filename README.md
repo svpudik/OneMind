@@ -16,7 +16,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].
   * **Hold (Singularity):** Silent, effortless point of pure being[cite: 1].
 * **Bilingual Support (i18n):** Seamlessly toggle between Czech (CS) and English (EN) with automatic system language detection[cite: 1].
-* **Ambient Audio:** Optional native Web Audio modes include Brown Noise (Deep Focus), 432 Hz Harmonic (Natural Calm), 528 Hz Harmonic (Transformation), and 4 Hz Delta Binaural (Singularity), with master volume control.
+* **Ambient Audio:** Optional native Web Audio includes a calm procedural forest sound with tiny gongs between breathing cycles and master volume control.
 * **Evening-Friendly Themes:** Auto mode uses blue during daytime and switches to a low-luminance red theme one hour before sunset. Manual Dark (red evening), Blue, and Light themes are also available.
 * **Mobile Pull-to-Refresh:** On touch devices, pull down from the top edge by at least 80 pixels to reload the application. Horizontal swipes do not trigger a reload.
 * **Secular Thought Impulses:** Dynamically cycles through non-religious, physics-grounded prompts during the singularity phase[cite: 1].

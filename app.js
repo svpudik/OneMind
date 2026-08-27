@@ -17,10 +17,7 @@ const translations = {
     tranquilityDescription: "Klidný rytmus 4-7-8 s delším výdechem a zadržením dechu.",
     pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
-      brown: "Hnědý šum — Hluboké soustředění",
-      432: "432 Hz harmonický — Přirozený klid",
-      528: "528 Hz harmonický — Proměna",
-      4: "4 Hz binaurální delta — Singularita"
+      forest: "Klidný les — Jemné soustředění"
     }
   },
   en: {
@@ -33,10 +30,7 @@ const translations = {
     tranquilityDescription: "A calm 4-7-8 rhythm with a longer exhale and breath hold.",
     pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
-      brown: "Brown Noise — Deep Focus",
-      432: "432 Hz Harmonic — Natural Calm",
-      528: "528 Hz Harmonic — Transformation",
-      4: "4 Hz Delta Binaural — Singularity"
+      forest: "Calm Forest — Gentle Focus"
     }
   }
 };
@@ -78,7 +72,7 @@ try {
 } catch {
   localStorage.removeItem('onemind_audio_settings');
 }
-const validFrequencies = ['off', 'brown', '432', '528', '4'];
+const validFrequencies = ['off', 'forest'];
 if (!validFrequencies.includes(String(audioSettings.frequency))) audioSettings.frequency = 'off';
 audioSettings.frequency = String(audioSettings.frequency);
 audioSettings.volume = Math.min(1, Math.max(0, Number(audioSettings.volume) || 0));
@@ -92,10 +86,7 @@ let sourceGain;
 let audioSources = [];
 let audioGeneration = 0;
 const audioProfiles = {
-  brown: { level: 0.42 },
-  '432': { level: 0.32 },
-  '528': { level: 0.3 },
-  '4': { level: 0.26 }
+  forest: { level: 0.2 }
 };
 
 function getPhaseAudioLevel() {
@@ -108,6 +99,26 @@ function updateAudioPhase() {
   phaseGainSource.offset.cancelScheduledValues(audioContext.currentTime);
   phaseGainSource.offset.setValueAtTime(phaseGainSource.offset.value, audioContext.currentTime);
   phaseGainSource.offset.linearRampToValueAtTime(targetLevel, audioContext.currentTime + 0.35);
+}
+
+function playCycleGong() {
+  if (!audioSettings.enabled || !audioContext || audioContext.state !== 'running') return;
+  const now = audioContext.currentTime;
+  const gongGain = audioContext.createGain();
+  gongGain.gain.setValueAtTime(0.0001, now);
+  gongGain.gain.exponentialRampToValueAtTime(Math.max(0.0001, audioSettings.volume * 0.16), now + 0.015);
+  gongGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+  gongGain.connect(masterGain);
+
+  [392, 587].forEach((frequency, index) => {
+    const gong = audioContext.createOscillator();
+    gong.type = 'sine';
+    gong.frequency.value = frequency;
+    gong.detune.value = index * 3;
+    gong.connect(gongGain);
+    gong.start(now);
+    gong.stop(now + 1.45);
+  });
 }
 
 function saveAudioSettings() {
@@ -155,11 +166,10 @@ function stopSound() {
   oldSourceGain.disconnect();
 }
 
-function createNoiseBuffer(type = 'brown') {
+function createNoiseBuffer() {
   const bufferLength = audioContext.sampleRate * 2;
   const buffer = audioContext.createBuffer(1, bufferLength, audioContext.sampleRate);
   const data = buffer.getChannelData(0);
-  let brownValue = 0;
   let pinkB0 = 0;
   let pinkB1 = 0;
   let pinkB2 = 0;
@@ -168,29 +178,15 @@ function createNoiseBuffer(type = 'brown') {
   let pinkB5 = 0;
   for (let index = 0; index < bufferLength; index += 1) {
     const whiteValue = Math.random() * 2 - 1;
-    if (type === 'pink') {
-      pinkB0 = 0.99886 * pinkB0 + whiteValue * 0.0555179;
-      pinkB1 = 0.99332 * pinkB1 + whiteValue * 0.0750759;
-      pinkB2 = 0.96900 * pinkB2 + whiteValue * 0.1538520;
-      pinkB3 = 0.86650 * pinkB3 + whiteValue * 0.3104856;
-      pinkB4 = 0.55000 * pinkB4 + whiteValue * 0.5329522;
-      pinkB5 = -0.7616 * pinkB5 - whiteValue * 0.0168980;
-      data[index] = (pinkB0 + pinkB1 + pinkB2 + pinkB3 + pinkB4 + pinkB5 + whiteValue * 0.5362) * 0.11;
-    } else {
-      brownValue = (brownValue + whiteValue * 0.02) / 1.02;
-      data[index] = brownValue * 3.5;
-    }
+    pinkB0 = 0.99886 * pinkB0 + whiteValue * 0.0555179;
+    pinkB1 = 0.99332 * pinkB1 + whiteValue * 0.0750759;
+    pinkB2 = 0.96900 * pinkB2 + whiteValue * 0.1538522;
+    pinkB3 = 0.86650 * pinkB3 + whiteValue * 0.3104856;
+    pinkB4 = 0.55000 * pinkB4 + whiteValue * 0.5329522;
+    pinkB5 = -0.7616 * pinkB5 - whiteValue * 0.0168980;
+    data[index] = (pinkB0 + pinkB1 + pinkB2 + pinkB3 + pinkB4 + pinkB5 + whiteValue * 0.5362) * 0.11;
   }
   return buffer;
-}
-
-function createHarmonicOscillators(frequency) {
-  return [frequency, frequency / 2, frequency * 1.5].map((value, index) => {
-    const harmonic = audioContext.createOscillator();
-    harmonic.type = index === 1 ? 'sine' : 'triangle';
-    harmonic.frequency.value = value;
-    return harmonic;
-  });
 }
 
 function startSound() {
@@ -207,32 +203,20 @@ function startSound() {
     phaseGainSource.offset.value = 0;
     phaseGainSource.connect(toneGain.gain);
     sourceGain.connect(toneGain).connect(masterGain);
-    if (audioSettings.frequency === 'brown') {
+    if (audioSettings.frequency === 'forest') {
       const noiseSource = audioContext.createBufferSource();
+      const highPass = audioContext.createBiquadFilter();
       const lowPass = audioContext.createBiquadFilter();
       noiseSource.buffer = createNoiseBuffer();
       noiseSource.loop = true;
+      highPass.type = 'highpass';
+      highPass.frequency.value = 90;
+      highPass.Q.value = 0.4;
       lowPass.type = 'lowpass';
-      lowPass.frequency.value = 400;
-      lowPass.Q.value = 0.7;
-      noiseSource.connect(lowPass).connect(sourceGain);
+      lowPass.frequency.value = 850;
+      lowPass.Q.value = 0.5;
+      noiseSource.connect(highPass).connect(lowPass).connect(sourceGain);
       audioSources.push(noiseSource);
-    } else if (audioSettings.frequency === '4') {
-      const merger = audioContext.createChannelMerger(2);
-      const left = audioContext.createOscillator();
-      const right = audioContext.createOscillator();
-      left.type = 'sine';
-      right.type = 'sine';
-      left.frequency.value = 174;
-      right.frequency.value = 178;
-      left.connect(merger, 0, 0);
-      right.connect(merger, 0, 1);
-      merger.connect(sourceGain);
-      audioSources.push(left, right);
-    } else {
-      const harmonics = createHarmonicOscillators(Number(audioSettings.frequency));
-      harmonics.forEach(harmonic => harmonic.connect(sourceGain));
-      audioSources.push(...harmonics);
     }
     phaseGainSource.start();
     audioSources.forEach(source => source.start());
@@ -242,7 +226,7 @@ function startSound() {
 
 function setSoundEnabled(enabled) {
   audioSettings.enabled = enabled;
-  if (enabled && audioSettings.frequency === 'off') audioSettings.frequency = '432';
+  if (enabled && audioSettings.frequency === 'off') audioSettings.frequency = 'forest';
   saveAudioSettings();
   updateSoundUI();
   if (enabled) startSound();
@@ -395,6 +379,7 @@ function startBreathCycle() {
     circle.style.opacity = step.key === 'inhale' ? '1' : step.key === 'exhale' ? '0.4' : '0.7';
     phaseLabel.innerText = selectedTechnique === 'simple' ? language[step.key] : `${language[section]} · ${language[step.key]}`;
     if (breathSession.stepIndex > 0) vibrateOnTransition();
+    if (step.key === 'inhale' && breathSession.stepIndex > 0) playCycleGong();
     if (step.key === 'singularity') showNextThought();
     breathSession.sessionElapsed += step.seconds;
     breathSession.stepIndex += 1;

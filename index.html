@@ -29,11 +29,13 @@
     <div class="control-group breath-control">
       <label for="breath-technique" id="breath-technique-label">Technique</label>
       <select id="breath-technique" class="ctrl-select">
+        <option value="simple">Simple Cycle</option>
         <option value="relax">Relax and Focus</option>
         <option value="coherence">Coherence</option>
         <option value="tranquility">Tranquility</option>
       </select>
     </div>
+    <p class="technique-description" id="technique-description"></p>
 
     <span class="divider">|</span>
 
@@ -72,6 +74,10 @@
     <div class="breath-circle" id="circle"></div>
     <div class="phase-label" id="phase">...</div>
     <p class="thought-text" id="thought">...</p>
+    <div class="breath-session-controls" id="breath-session-controls" hidden>
+      <button id="breath-play-pause" class="ctrl-btn" type="button" aria-pressed="false" aria-label="Pause breathing">⏸</button>
+      <button id="breath-reset" class="ctrl-btn" type="button" aria-label="Reset breathing">↺</button>
+    </div>
   </div>
   <script src="app.js"></script>
   <script>

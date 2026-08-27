@@ -273,6 +273,16 @@ body[data-theme="light"] {
   transition: opacity 1s ease-in-out;
 }
 
+.breath-session-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.breath-session-controls[hidden] {
+  display: none;
+}
+
 .top-controls {
   position: absolute;
   top: 20px;
@@ -333,6 +343,13 @@ body[data-theme="light"] {
   color: var(--text-secondary);
 }
 
+.technique-description {
+  max-width: 260px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .ctrl-select {
   background-color: var(--control-bg);
   border: 1px solid var(--divider-color);
@@ -381,6 +398,12 @@ body.theme-light .ctrl-select,
     order: 3;
     flex-basis: 100%;
     justify-content: flex-end;
+  }
+
+  .technique-description {
+    order: 2;
+    flex-basis: 100%;
+    text-align: right;
   }
 }
 

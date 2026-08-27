@@ -10,7 +10,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🌟 Key Features
 
-* **Guided Breathing Techniques:** Choose Relax and Focus (box breathing), Coherence (gradual 4/5/6-second pacing), or Tranquility (4-7-8 breathing). Each session includes a warm-up, main cycle, and cooldown, with gentle vibration at each breath transition on supported devices.
+* **Guided Breathing Techniques:** Choose Simple Cycle (three phases without a warm-up), Relax and Focus (box breathing), Coherence (gradual 4/5/6-second pacing), or Tranquility (4-7-8 breathing). Guided sessions can be paused, resumed, or reset, and longer techniques include a warm-up, main cycle, and cooldown with gentle vibration at each breath transition on supported devices.
 * **Breath & Singularity Visualizer:** Synchronizes visual feedback with a 3-phase breathing cycle[cite: 1]:
   * **Inhale:** Fullness / Openness to space[cite: 1].
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].

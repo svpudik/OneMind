@@ -10,7 +10,12 @@ const translations = {
   cs: {
     inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Zadržení (Singularita)",
     pace: "Tempo", technique: "Technika", warmup: "Zahřátí", mainCycle: "Hlavní cyklus", cooldown: "Zklidnění",
-    relax: "Uvolnění a soustředění", coherence: "Koherence", tranquility: "Klid", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
+    simple: "Jednoduchý cyklus", relax: "Uvolnění a soustředění", coherence: "Koherence", tranquility: "Klid",
+    simpleDescription: "Tři jednoduché fáze bez zahřátí: nádech, výdech a krátké zadržení.",
+    relaxDescription: "Krabičkové dýchání 4-4-4-4 pro soustředění a stabilní rytmus.",
+    coherenceDescription: "Postupně zpomalí dech na 5 nádechů za minutu bez zadržování.",
+    tranquilityDescription: "Klidný rytmus 4-7-8 s delším výdechem a zadržením dechu.",
+    pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
       brown: "Hnědý šum — Hluboké soustředění",
       432: "432 Hz harmonický — Přirozený klid",
@@ -21,7 +26,12 @@ const translations = {
   en: {
     inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Hold (Singularity)",
     pace: "Pace", technique: "Technique", warmup: "Warm-up", mainCycle: "Main Cycle", cooldown: "Cooldown",
-    relax: "Relax and Focus", coherence: "Coherence", tranquility: "Tranquility", sound: "Sound", volume: "Volume", off: "Off",
+    simple: "Simple Cycle", relax: "Relax and Focus", coherence: "Coherence", tranquility: "Tranquility",
+    simpleDescription: "Three simple phases with no warm-up: inhale, exhale, and a short hold.",
+    relaxDescription: "4-4-4-4 box breathing for focus and a steady rhythm.",
+    coherenceDescription: "Gradually slows breathing to 5 breaths per minute with no holds.",
+    tranquilityDescription: "A calm 4-7-8 rhythm with a longer exhale and breath hold.",
+    pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
       brown: "Brown Noise — Deep Focus",
       432: "432 Hz Harmonic — Natural Calm",
@@ -32,8 +42,14 @@ const translations = {
 };
 
 let currentPhaseKey = 'inhale';
-let selectedTechnique = localStorage.getItem('onemind_breath_technique') || 'relax';
+let selectedTechnique = localStorage.getItem('onemind_breath_technique') || 'simple';
 const techniques = {
+  simple: {
+    warmup: [],
+    main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'exhale', seconds: 4, scale: 0.8 }, { key: 'singularity', seconds: 2, scale: 0.8 }],
+    mainMinutes: 15,
+    cooldown: []
+  },
   relax: {
     warmup: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60],
     main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'singularity', seconds: 4, scale: 1.8 }, { key: 'exhale', seconds: 4, scale: 0.8 }, { key: 'singularity', seconds: 4, scale: 0.8 }],
@@ -53,8 +69,9 @@ const techniques = {
     cooldown: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
   }
 };
-if (!techniques[selectedTechnique]) selectedTechnique = 'relax';
+if (!techniques[selectedTechnique]) selectedTechnique = 'simple';
 let cycleTimeouts = [];
+let breathSession;
 let audioSettings = { enabled: false, frequency: 'off', volume: 0.35 };
 try {
   audioSettings = { ...audioSettings, ...JSON.parse(localStorage.getItem('onemind_audio_settings') || '{}') };
@@ -243,6 +260,7 @@ function updateLangUI() {
   document.getElementById('sound-toggle').setAttribute('aria-label', `${language.sound}: ${audioSettings.enabled ? language.off : language.sound}`);
   updateFrequencyOptions();
   updateTechniqueOptions();
+  updateBreathControlsUI();
   updateSoundUI();
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
@@ -260,9 +278,23 @@ function updateFrequencyOptions() {
 function updateTechniqueOptions() {
   const language = translations[currentLang];
   const techniqueSelect = document.getElementById('breath-technique');
-  techniqueSelect.options[0].text = language.relax;
-  techniqueSelect.options[1].text = language.coherence;
-  techniqueSelect.options[2].text = language.tranquility;
+  techniqueSelect.options[0].text = language.simple;
+  techniqueSelect.options[1].text = language.relax;
+  techniqueSelect.options[2].text = language.coherence;
+  techniqueSelect.options[3].text = language.tranquility;
+  document.getElementById('technique-description').innerText = language[`${selectedTechnique}Description`];
+}
+
+function updateBreathControlsUI() {
+  const language = translations[currentLang];
+  const isPaused = breathSession && breathSession.paused;
+  const sessionControls = document.getElementById('breath-session-controls');
+  const playPause = document.getElementById('breath-play-pause');
+  sessionControls.hidden = selectedTechnique === 'simple';
+  playPause.innerText = isPaused ? '▶' : '⏸';
+  playPause.setAttribute('aria-pressed', String(Boolean(isPaused)));
+  playPause.setAttribute('aria-label', isPaused ? language.resume : language.pause);
+  document.getElementById('breath-reset').setAttribute('aria-label', language.reset);
 }
 
 function setLanguage(lang) {
@@ -343,36 +375,38 @@ function startBreathCycle() {
   cycleTimeouts = [];
   const technique = techniques[selectedTechnique];
   const language = translations[currentLang];
-  const warmupDuration = 60;
+  const warmupDuration = technique.warmup.length ? 60 : 0;
   const mainDuration = technique.mainMinutes * 60;
   const steps = [
     ...expandBlocks(technique.warmup),
     ...expandSteps(technique.main, mainDuration),
     ...expandBlocks(technique.cooldown)
   ];
-  let stepIndex = 0;
-  let sessionElapsed = 0;
+  breathSession = { steps, stepIndex: 0, sessionElapsed: 0, paused: false };
 
   const runStep = () => {
-    const step = steps[stepIndex];
-    const section = sessionElapsed < warmupDuration ? 'warmup' : sessionElapsed < warmupDuration + mainDuration ? 'mainCycle' : 'cooldown';
+    if (breathSession.paused) return;
+    const step = breathSession.steps[breathSession.stepIndex];
+    const section = breathSession.sessionElapsed < warmupDuration ? 'warmup' : breathSession.sessionElapsed < warmupDuration + mainDuration ? 'mainCycle' : 'cooldown';
     currentPhaseKey = step.key;
     updateAudioPhase();
     document.documentElement.style.setProperty('--breath-duration', `${step.seconds}s`);
     circle.style.transform = `scale(${step.scale || (step.key === 'inhale' ? 1.8 : 0.8)})`;
     circle.style.opacity = step.key === 'inhale' ? '1' : step.key === 'exhale' ? '0.4' : '0.7';
-    phaseLabel.innerText = `${language[section]} · ${language[step.key]}`;
-    if (stepIndex > 0) vibrateOnTransition();
+    phaseLabel.innerText = selectedTechnique === 'simple' ? language[step.key] : `${language[section]} · ${language[step.key]}`;
+    if (breathSession.stepIndex > 0) vibrateOnTransition();
     if (step.key === 'singularity') showNextThought();
-    sessionElapsed += step.seconds;
-    stepIndex += 1;
+    breathSession.sessionElapsed += step.seconds;
+    breathSession.stepIndex += 1;
     cycleTimeouts.push(setTimeout(() => {
-      if (stepIndex < steps.length) runStep();
+      if (breathSession.stepIndex < breathSession.steps.length) runStep();
       else startBreathCycle();
     }, step.seconds * 1000));
   };
 
+  breathSession.runStep = runStep;
   runStep();
+  updateBreathControlsUI();
 }
 // Správa témat
 let currentTheme = localStorage.getItem('onemind_theme') || 'auto';
@@ -551,6 +585,22 @@ breathTechniqueSelect.addEventListener('change', event => {
   localStorage.setItem('onemind_breath_technique', selectedTechnique);
   startBreathCycle();
 });
+document.getElementById('breath-play-pause').addEventListener('click', () => {
+  if (!breathSession) return;
+  if (breathSession.paused) {
+    breathSession.paused = false;
+    breathSession.runStep();
+  } else {
+    breathSession.paused = true;
+    const currentStep = breathSession.steps[breathSession.stepIndex - 1];
+    breathSession.stepIndex -= 1;
+    breathSession.sessionElapsed -= currentStep.seconds;
+    cycleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    cycleTimeouts = [];
+  }
+  updateBreathControlsUI();
+});
+document.getElementById('breath-reset').addEventListener('click', () => startBreathCycle());
 const soundToggle = document.getElementById('sound-toggle');
 const soundFrequencySelect = document.getElementById('sound-frequency');
 const soundVolume = document.getElementById('sound-volume');

@@ -195,6 +195,44 @@ body {
   justify-content: center;
   overflow: hidden;
   transition: background-color 0.5s ease, color 0.5s ease;
+  overscroll-behavior-y: contain;
+}
+
+/* Keep Android and browser night-mode color transforms from replacing the selected theme. */
+body[data-theme="red"],
+body[data-theme="dark"],
+body[data-theme="blue"] {
+  color-scheme: dark;
+}
+
+body[data-theme="light"] {
+  color-scheme: light;
+}
+
+.pull-refresh-indicator {
+  position: fixed;
+  top: -34px;
+  left: 50%;
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--accent-color);
+  border-radius: 50%;
+  color: var(--accent-color);
+  font-size: 1.1rem;
+  line-height: 25px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.pull-refresh-indicator.active {
+  opacity: 1;
+}
+
+.pull-refresh-indicator.ready {
+  background-color: var(--control-bg);
 }
 
 .container {
@@ -294,21 +332,6 @@ body {
   color: var(--text-secondary);
 }
 
-.reminder-control {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.reminder-control input {
-  accent-color: var(--accent-color);
-  cursor: pointer;
-}
-
 .ctrl-select {
   background-color: var(--control-bg);
   border: 1px solid var(--divider-color);
@@ -388,33 +411,6 @@ body.theme-light .ctrl-select,
 .repo-link:hover, .repo-link:focus-visible {
   color: var(--accent-color);
   text-decoration: underline;
-}
-
-.calm-reminder-notification {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 3;
-  max-width: min(360px, calc(100vw - 40px));
-  padding: 16px;
-  background: var(--control-bg);
-  border: 1px solid var(--accent-color);
-  border-radius: 6px;
-  color: var(--text-primary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.calm-reminder-notification[hidden] {
-  display: none;
-}
-
-.calm-reminder-notification p {
-  margin-bottom: 10px;
-  line-height: 1.5;
-}
-
-.calm-reminder-notification .ctrl-btn {
-  padding: 2px 0;
 }
 
 .divider {

@@ -9,7 +9,7 @@ const thoughtEl = document.getElementById('thought');
 const translations = {
   cs: {
     inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Zadržení (Singularita)",
-    pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto", calmReminder: "Připomenout klid po 30 min", dismiss: "Zavřít",
+    pace: "Tempo", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
       brown: "Hnědý šum — Hluboké soustředění",
       432: "432 Hz harmonický — Přirozený klid",
@@ -19,7 +19,7 @@ const translations = {
   },
   en: {
     inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Hold (Singularity)",
-    pace: "Pace", sound: "Sound", volume: "Volume", off: "Off", calmReminder: "30 min device reminder", dismiss: "Dismiss",
+    pace: "Pace", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
       brown: "Brown Noise — Deep Focus",
       432: "432 Hz Harmonic — Natural Calm",
@@ -32,10 +32,6 @@ const translations = {
 let currentPhaseKey = 'inhale';
 let breathInterval = Number(localStorage.getItem('onemind_breath_interval')) || 4;
 let cycleTimeouts = [];
-let calmReminderEnabled = localStorage.getItem('onemind_calm_reminder') === 'true';
-let calmReminderTimer;
-let calmReminderElapsed = 0;
-let calmReminderStartedAt;
 let audioSettings = { enabled: false, frequency: 'off', volume: 0.35 };
 try {
   audioSettings = { ...audioSettings, ...JSON.parse(localStorage.getItem('onemind_audio_settings') || '{}') };
@@ -223,7 +219,6 @@ function updateLangUI() {
   document.getElementById('volume-label').innerText = language.volume;
   document.getElementById('sound-toggle').setAttribute('aria-label', `${language.sound}: ${audioSettings.enabled ? language.off : language.sound}`);
   updateFrequencyOptions();
-  updateCalmReminderUI();
   updateSoundUI();
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
@@ -242,38 +237,6 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('onemind_lang', lang);
   updateLangUI();
-}
-
-function scheduleCalmReminder() {
-  clearTimeout(calmReminderTimer);
-  if (!calmReminderEnabled) return;
-  calmReminderStartedAt = Date.now();
-  calmReminderTimer = window.setTimeout(showCalmReminder, Math.max(0, 1800000 - calmReminderElapsed));
-}
-
-function showCalmReminder() {
-  calmReminderElapsed = 0;
-  calmReminderStartedAt = undefined;
-  const message = currentLang === 'cs'
-    ? 'Jste u obrazovky již 30 minut. Zastavte se na chvíli, nadechněte se a vraťte se ke klidu.'
-    : 'You have been using a screen for 30 minutes. Take a moment to breathe and return to calm.';
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const notification = new Notification('OneMind', { body: message, tag: 'onemind-calm-reminder' });
-    notification.onclick = () => window.focus();
-  }
-  if (!document.hidden) {
-    document.getElementById('calm-reminder-notification').hidden = false;
-  }
-}
-
-function updateCalmReminderUI() {
-  const language = translations[currentLang];
-  document.getElementById('calm-reminder').checked = calmReminderEnabled;
-  document.getElementById('calm-reminder-label').innerText = language.calmReminder;
-  document.getElementById('calm-reminder-message').innerText = currentLang === 'cs'
-    ? 'Jste u obrazovky již 30 minut. Zastavte se na chvíli, nadechněte se a vraťte se ke klidu.'
-    : 'You have been using a screen for 30 minutes. Take a moment to breathe and return to calm.';
-  document.getElementById('calm-reminder-dismiss').innerText = language.dismiss;
 }
 
 // Načtení JSON
@@ -419,6 +382,7 @@ function applyTheme(theme) {
   const effectiveTheme = theme === 'auto' ? (isAutoEvening() ? 'red' : 'blue') : theme;
   document.body.classList.remove('theme-dark', 'theme-light', 'theme-red', 'theme-blue');
   document.documentElement.dataset.theme = effectiveTheme;
+  document.body.dataset.theme = effectiveTheme;
   
   if (effectiveTheme === 'dark') {
     document.body.classList.add('theme-dark');
@@ -429,8 +393,6 @@ function applyTheme(theme) {
   } else if (effectiveTheme === 'blue') {
     document.body.classList.add('theme-blue');
   }
-  // Pokud je theme === 'auto', o vše se stará CSS media query @media (prefers-color-scheme: light)
-
   document.getElementById('btn-theme-auto').classList.toggle('active', theme === 'auto');
   document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
   document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
@@ -467,30 +429,61 @@ document.addEventListener('click', event => {
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') setSettingsOpen(false);
 });
+const pullRefreshIndicator = document.getElementById('pull-refresh-indicator');
+let pullRefreshStartY;
+let pullRefreshStartX;
+let pullRefreshDistance = 0;
+let pullRefreshTracking = false;
+const pullRefreshThreshold = 80;
+
+document.addEventListener('touchstart', event => {
+  if (event.touches.length !== 1 || window.scrollY > 0) return;
+  pullRefreshStartY = event.touches[0].clientY;
+  pullRefreshStartX = event.touches[0].clientX;
+  pullRefreshDistance = 0;
+  pullRefreshTracking = true;
+}, { passive: true });
+
+document.addEventListener('touchmove', event => {
+  if (!pullRefreshTracking || event.touches.length !== 1) return;
+  const horizontalDistance = Math.abs(event.touches[0].clientX - pullRefreshStartX);
+  pullRefreshDistance = Math.max(0, event.touches[0].clientY - pullRefreshStartY);
+  if (horizontalDistance > pullRefreshDistance) {
+    pullRefreshTracking = false;
+    pullRefreshIndicator.classList.remove('active', 'ready');
+    pullRefreshIndicator.style.transform = '';
+    return;
+  }
+  if (pullRefreshDistance === 0) return;
+  event.preventDefault();
+  const progress = Math.min(1, pullRefreshDistance / pullRefreshThreshold);
+  pullRefreshIndicator.classList.add('active');
+  pullRefreshIndicator.style.transform = `translate(-50%, ${Math.min(52, 12 + progress * 40)}px)`;
+  pullRefreshIndicator.classList.toggle('ready', progress === 1);
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  if (!pullRefreshTracking) return;
+  const shouldReload = pullRefreshDistance >= pullRefreshThreshold;
+  pullRefreshTracking = false;
+  pullRefreshDistance = 0;
+  pullRefreshIndicator.classList.remove('active', 'ready');
+  pullRefreshIndicator.style.transform = '';
+  if (shouldReload) window.location.reload();
+}, { passive: true });
+
+document.addEventListener('touchcancel', () => {
+  pullRefreshTracking = false;
+  pullRefreshDistance = 0;
+  pullRefreshIndicator.classList.remove('active', 'ready');
+  pullRefreshIndicator.style.transform = '';
+}, { passive: true });
 const breathIntervalSelect = document.getElementById('breath-interval');
 breathIntervalSelect.value = String(breathInterval);
 breathIntervalSelect.addEventListener('change', event => {
   breathInterval = Number(event.target.value);
   localStorage.setItem('onemind_breath_interval', String(breathInterval));
   startBreathCycle();
-});
-const calmReminder = document.getElementById('calm-reminder');
-calmReminder.checked = calmReminderEnabled;
-calmReminder.addEventListener('change', event => {
-  calmReminderEnabled = event.target.checked;
-  calmReminderElapsed = 0;
-  localStorage.setItem('onemind_calm_reminder', String(calmReminderEnabled));
-  if (calmReminderEnabled && 'Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission().catch(() => {});
-  }
-  if (!calmReminderEnabled) {
-    document.getElementById('calm-reminder-notification').hidden = true;
-  }
-  scheduleCalmReminder();
-});
-document.getElementById('calm-reminder-dismiss').addEventListener('click', () => {
-  document.getElementById('calm-reminder-notification').hidden = true;
-  scheduleCalmReminder();
 });
 const soundToggle = document.getElementById('sound-toggle');
 const soundFrequencySelect = document.getElementById('sound-frequency');
@@ -526,4 +519,3 @@ document.addEventListener('visibilitychange', () => {
 
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);
-scheduleCalmReminder();

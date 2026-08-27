@@ -2,6 +2,8 @@
 
 **OneMind** is a lightweight, open-source web application, Progressive Web App (PWA), and browser extension designed to help individuals clear mental noise, regain focus, and settle into the present moment.
 
+This application was created with the assistance of artificial intelligence (AI).
+
 Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rhythm of human breathing alongside principles of theoretical physics (wavelengths, scale relativity, noise reduction, and singularity) to deconstruct stress and conceptual clutter[cite: 1].
 
 ---
@@ -15,7 +17,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 * **Bilingual Support (i18n):** Seamlessly toggle between Czech (CS) and English (EN) with automatic system language detection[cite: 1].
 * **Ambient Audio:** Optional native Web Audio modes include Brown Noise (Deep Focus), 432 Hz Harmonic (Natural Calm), 528 Hz Harmonic (Transformation), and 4 Hz Delta Binaural (Singularity), with master volume control.
 * **Evening-Friendly Themes:** Auto mode uses blue during daytime and switches to a low-luminance red theme one hour before sunset. Manual Dark (red evening), Blue, and Light themes are also available.
-* **Opt-In Screen Reminder:** An optional 30-minute reminder can show an in-app message and browser notification to pause, breathe, and return to calm. It is disabled by default.
+* **Mobile Pull-to-Refresh:** On touch devices, pull down from the top edge by at least 80 pixels to reload the application. Horizontal swipes do not trigger a reload.
 * **Secular Thought Impulses:** Dynamically cycles through non-religious, physics-grounded prompts during the singularity phase[cite: 1].
 * **Zero Infrastructure Overhead:** Runs 100% client-side with zero tracking, external databases, or backend services.
 
@@ -23,9 +25,9 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🎛️ Controls
 
-Open the settings button to adjust the breathing pace, ambient sound, volume, language, and theme.
+Open the settings button to adjust the breathing pace, ambient sound, volume, language, and theme. On mobile, pull down from the top edge by at least 80 pixels to reload the application when needed.
 
-Location is optional and is used only by Auto theme to calculate local sunrise and sunset, so OneMind can switch from blue to red one hour before sunset. Location is not required for the breathing exercise, ambient audio, manual themes, or screen reminder. The coordinates are used locally in the browser, are not collected, stored, or sent to any server, and Auto theme falls back to a 19:00–07:00 local-time schedule if permission is denied. The screen reminder requires notification permission only when enabled and works while the app remains open or in the background; it cannot track total device usage after the app is closed.
+Location is optional and is used only by Auto theme to calculate local sunrise and sunset, so OneMind can switch from blue to red one hour before sunset. Location is not required for the breathing exercise or ambient audio. The coordinates are used locally in the browser, are not collected, stored, or sent to any server, and Auto theme falls back to a 19:00–07:00 local-time schedule if permission is denied.
 
 ---
 

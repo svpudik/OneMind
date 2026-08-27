@@ -5,7 +5,9 @@ const APP_SHELL = [
   './style.css',
   './app.js',
   './data/thoughts.json',
-  './icon.svg'
+  './icon.svg',
+  './sound/dany_photo-forestbirds-319791.mp3',
+  './sound/empressnefertitimumbi-forest-bird-harmonies-258412.mp3'
 ];
 
 self.addEventListener('install', event => {

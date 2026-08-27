@@ -84,8 +84,14 @@ let toneGain;
 let phaseGainSource;
 let sourceGain;
 let audioSources = [];
+let forestTracks = [];
+let forestTrackSources = [];
 let audioGeneration = 0;
 let gongVariationIndex = 0;
+const forestTrackUrls = [
+  './sound/dany_photo-forestbirds-319791.mp3',
+  './sound/empressnefertitimumbi-forest-bird-harmonies-258412.mp3'
+];
 const audioProfiles = {
   forest: { level: 0.22 }
 };
@@ -167,29 +173,11 @@ function stopSound() {
   oldSources.forEach(source => source.stop(stopAt + 0.02));
   oldPhaseGainSource.stop(stopAt + 0.02);
   oldSourceGain.disconnect();
-}
-
-function createNoiseBuffer() {
-  const bufferLength = audioContext.sampleRate * 2;
-  const buffer = audioContext.createBuffer(1, bufferLength, audioContext.sampleRate);
-  const data = buffer.getChannelData(0);
-  let pinkB0 = 0;
-  let pinkB1 = 0;
-  let pinkB2 = 0;
-  let pinkB3 = 0;
-  let pinkB4 = 0;
-  let pinkB5 = 0;
-  for (let index = 0; index < bufferLength; index += 1) {
-    const whiteValue = Math.random() * 2 - 1;
-    pinkB0 = 0.99886 * pinkB0 + whiteValue * 0.0555179;
-    pinkB1 = 0.99332 * pinkB1 + whiteValue * 0.0750759;
-    pinkB2 = 0.96900 * pinkB2 + whiteValue * 0.1538522;
-    pinkB3 = 0.86650 * pinkB3 + whiteValue * 0.3104856;
-    pinkB4 = 0.55000 * pinkB4 + whiteValue * 0.5329522;
-    pinkB5 = -0.7616 * pinkB5 - whiteValue * 0.0168980;
-    data[index] = (pinkB0 + pinkB1 + pinkB2 + pinkB3 + pinkB4 + pinkB5 + whiteValue * 0.5362) * 0.11;
-  }
-  return buffer;
+  forestTrackSources.forEach(source => source.disconnect());
+  forestTracks.forEach(track => {
+    track.pause();
+    track.currentTime = 0;
+  });
 }
 
 function startSound() {
@@ -207,19 +195,20 @@ function startSound() {
     phaseGainSource.connect(toneGain.gain);
     sourceGain.connect(toneGain).connect(masterGain);
     if (audioSettings.frequency === 'forest') {
-      const noiseSource = audioContext.createBufferSource();
-      const highPass = audioContext.createBiquadFilter();
-      const lowPass = audioContext.createBiquadFilter();
-      noiseSource.buffer = createNoiseBuffer();
-      noiseSource.loop = true;
-      highPass.type = 'highpass';
-      highPass.frequency.value = 45;
-      highPass.Q.value = 0.4;
-      lowPass.type = 'lowpass';
-      lowPass.frequency.value = 480;
-      lowPass.Q.value = 0.5;
-      noiseSource.connect(highPass).connect(lowPass).connect(sourceGain);
-      audioSources.push(noiseSource);
+      if (forestTracks.length === 0) {
+        forestTracks = forestTrackUrls.map(url => {
+          const track = new Audio(url);
+          track.loop = true;
+          track.preload = 'auto';
+          return track;
+        });
+        forestTrackSources = forestTracks.map(track => audioContext.createMediaElementSource(track));
+      }
+      forestTrackSources.forEach(source => source.connect(sourceGain));
+      forestTracks.forEach(track => {
+        track.volume = 0.5;
+        track.play().catch(() => updateSoundUI());
+      });
     }
     phaseGainSource.start();
     audioSources.forEach(source => source.start());

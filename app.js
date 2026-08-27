@@ -410,19 +410,28 @@ function setTheme(theme) {
   applyTheme(theme);
 }
 
-document.getElementById('btn-theme-auto').addEventListener('click', () => setTheme('auto'));
-document.getElementById('btn-theme-dark').addEventListener('click', () => setTheme('dark'));
-document.getElementById('btn-theme-light').addEventListener('click', () => setTheme('light'));
-document.getElementById('btn-theme-blue').addEventListener('click', () => setTheme('blue'));
-document.getElementById('btn-cs').addEventListener('click', () => setLanguage('cs'));
-document.getElementById('btn-en').addEventListener('click', () => setLanguage('en'));
 const settingsToggle = document.getElementById('settings-toggle');
 const settingsPanel = document.getElementById('settings-panel');
 function setSettingsOpen(isOpen) {
   settingsPanel.hidden = !isOpen;
   settingsToggle.setAttribute('aria-expanded', String(isOpen));
 }
-settingsToggle.addEventListener('click', () => setSettingsOpen(settingsPanel.hidden));
+function handleControlActivation(event) {
+  const control = event.target.closest('button');
+  if (!control || !control.closest('.top-controls')) return;
+  if (event.type === 'pointerup' && control.dataset.pointerHandled === 'true') return;
+  if (event.type === 'pointerup') control.dataset.pointerHandled = 'true';
+  if (control === settingsToggle) setSettingsOpen(settingsPanel.hidden);
+  else if (control.id === 'btn-theme-auto') setTheme('auto');
+  else if (control.id === 'btn-theme-dark') setTheme('dark');
+  else if (control.id === 'btn-theme-light') setTheme('light');
+  else if (control.id === 'btn-theme-blue') setTheme('blue');
+  else if (control.id === 'btn-cs') setLanguage('cs');
+  else if (control.id === 'btn-en') setLanguage('en');
+}
+
+document.addEventListener('pointerup', handleControlActivation);
+document.addEventListener('click', handleControlActivation);
 document.addEventListener('click', event => {
   if (!event.target.closest('.top-controls')) setSettingsOpen(false);
 });

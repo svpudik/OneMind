@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onemind-v3';
+const CACHE_NAME = 'onemind-v4';
 const APP_SHELL = [
   './',
   './index.html',

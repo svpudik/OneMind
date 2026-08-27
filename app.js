@@ -291,7 +291,7 @@ function updateBreathControlsUI() {
   const sessionControls = document.getElementById('breath-session-controls');
   const playPause = document.getElementById('breath-play-pause');
   sessionControls.hidden = selectedTechnique === 'simple';
-  playPause.innerText = isPaused ? '▶' : '⏸';
+  playPause.dataset.state = isPaused ? 'play' : 'pause';
   playPause.setAttribute('aria-pressed', String(Boolean(isPaused)));
   playPause.setAttribute('aria-label', isPaused ? language.resume : language.pause);
   document.getElementById('breath-reset').setAttribute('aria-label', language.reset);

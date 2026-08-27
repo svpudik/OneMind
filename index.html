@@ -11,7 +11,13 @@
 </head>
 <body>
   <div class="top-controls">
-    <button id="settings-toggle" class="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings">⚙</button>
+    <div class="top-control-row">
+      <div class="breath-session-controls" id="breath-session-controls" hidden>
+        <button id="breath-play-pause" class="settings-toggle breath-action-btn" type="button" aria-pressed="false" aria-label="Pause breathing">⏸</button>
+        <button id="breath-reset" class="settings-toggle breath-action-btn" type="button" aria-label="Reset breathing">↺</button>
+      </div>
+      <button id="settings-toggle" class="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings">⚙</button>
+    </div>
     <div id="settings-panel" class="settings-panel" hidden>
     <!-- Přepínač T tématu -->
     <div class="control-group">
@@ -74,10 +80,6 @@
     <div class="breath-circle" id="circle"></div>
     <div class="phase-label" id="phase">...</div>
     <p class="thought-text" id="thought">...</p>
-    <div class="breath-session-controls" id="breath-session-controls" hidden>
-      <button id="breath-play-pause" class="ctrl-btn" type="button" aria-pressed="false" aria-label="Pause breathing">⏸</button>
-      <button id="breath-reset" class="ctrl-btn" type="button" aria-label="Reset breathing">↺</button>
-    </div>
   </div>
   <script src="app.js"></script>
   <script>

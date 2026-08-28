@@ -17,7 +17,9 @@ const translations = {
     tranquilityDescription: "Klidný rytmus 4-7-8 s delším výdechem a zadržením dechu.",
     pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
-      forest: "Klidný les — Jemné soustředění"
+      forest: "Lesní táborák — gong při nádechu",
+      bowls: "Tibetské mísy — rytmus dechu",
+      bell: "Meditace se zvonkem — rytmus dechu"
     }
   },
   en: {
@@ -30,7 +32,9 @@ const translations = {
     tranquilityDescription: "A calm 4-7-8 rhythm with a longer exhale and breath hold.",
     pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
-      forest: "Calm Forest — Gentle Focus"
+      forest: "Forest Campfire — Gong on Inhale",
+      bowls: "Tibetan Bowls — Breath Rhythm",
+      bell: "Bell Meditation — Breath Rhythm"
     }
   }
 };
@@ -72,7 +76,7 @@ try {
 } catch {
   localStorage.removeItem('onemind_audio_settings');
 }
-const validFrequencies = ['off', 'forest'];
+const validFrequencies = ['off', 'forest', 'bowls', 'bell'];
 if (!validFrequencies.includes(String(audioSettings.frequency))) audioSettings.frequency = 'off';
 audioSettings.frequency = String(audioSettings.frequency);
 audioSettings.volume = Math.min(1, Math.max(0, Number(audioSettings.volume) || 0));
@@ -84,17 +88,30 @@ let toneGain;
 let phaseGainSource;
 let sourceGain;
 let audioSources = [];
-let forestTracks = [];
-let forestTrackSources = [];
+let ambientTrack;
+let ambientTrackSource;
+let rhythmTrack;
+let rhythmTrackSource;
+let inhaleGong;
+let inhaleGongSource;
+let inhaleGongGain;
 let audioGeneration = 0;
-let gongVariationIndex = 0;
-const forestTrackUrls = [
-  './sound/dany_photo-forestbirds-319791.mp3',
-  './sound/empressnefertitimumbi-forest-bird-harmonies-258412.mp3'
-];
 const audioProfiles = {
-  forest: { level: 0.22 }
+  forest: { url: './sound/soundreality-ambient-forest-campfire-meditation-452486.mp3', level: 0.22 },
+  bowls: { url: './sound/soul_frequencies-tibetan-bowls-for-meditation-498962.mp3', level: 0.18, phraseSeconds: 29 },
+  bell: { url: './sound/freesound_community-bell-meditation-75335.mp3', level: 0.18, phraseSeconds: 30 }
 };
+let currentPhaseSeconds = 4;
+
+function getBreathCycleSeconds() {
+  return techniques[selectedTechnique].main.reduce((total, step) => total + step.seconds, 0);
+}
+
+function getRhythmPlaybackRate(profile) {
+  const cycleSeconds = getBreathCycleSeconds();
+  const cycleCount = Math.max(1, Math.round(profile.phraseSeconds / cycleSeconds));
+  return profile.phraseSeconds / (cycleCount * cycleSeconds);
+}
 
 function getPhaseAudioLevel() {
   return { inhale: 1, exhale: 0.45, singularity: 0.05 }[currentPhaseKey] || 0.05;
@@ -105,29 +122,20 @@ function updateAudioPhase() {
   const targetLevel = getPhaseAudioLevel();
   phaseGainSource.offset.cancelScheduledValues(audioContext.currentTime);
   phaseGainSource.offset.setValueAtTime(phaseGainSource.offset.value, audioContext.currentTime);
-  phaseGainSource.offset.linearRampToValueAtTime(targetLevel, audioContext.currentTime + 0.35);
+  phaseGainSource.offset.linearRampToValueAtTime(targetLevel, audioContext.currentTime + Math.min(0.35, currentPhaseSeconds * 0.25));
 }
 
-function playCycleGong() {
-  if (!audioSettings.enabled || !audioContext || audioContext.state !== 'running') return;
-  const now = audioContext.currentTime;
-  const gongTones = [[392, 587], [415, 622], [440, 659], [370, 554]][gongVariationIndex % 4];
-  gongVariationIndex += 1;
-  const gongGain = audioContext.createGain();
-  gongGain.gain.setValueAtTime(0.0001, now);
-  gongGain.gain.exponentialRampToValueAtTime(Math.max(0.0001, audioSettings.volume * 0.16), now + 0.015);
-  gongGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
-  gongGain.connect(masterGain);
+function createTrack(url) {
+  const track = new Audio(url);
+  track.loop = true;
+  track.preload = 'auto';
+  return track;
+}
 
-  gongTones.forEach((frequency, index) => {
-    const gong = audioContext.createOscillator();
-    gong.type = 'sine';
-    gong.frequency.value = frequency;
-    gong.detune.value = index * 3;
-    gong.connect(gongGain);
-    gong.start(now);
-    gong.stop(now + 1.45);
-  });
+function playInhaleGong() {
+  if (!inhaleGong || !audioContext || audioContext.state !== 'running') return;
+  inhaleGong.currentTime = 0;
+  inhaleGong.play().catch(() => {});
 }
 
 function saveAudioSettings() {
@@ -157,8 +165,7 @@ function ensureAudioContext() {
 }
 
 function stopSound() {
-  if (!audioContext || !phaseGainSource) return;
-  const oldSources = audioSources;
+  if (!audioContext) return;
   const oldToneGain = toneGain;
   const oldPhaseGainSource = phaseGainSource;
   const oldSourceGain = sourceGain;
@@ -166,18 +173,26 @@ function stopSound() {
   toneGain = undefined;
   phaseGainSource = undefined;
   sourceGain = undefined;
-  const stopAt = audioContext.currentTime + 0.25;
-  oldToneGain.gain.cancelScheduledValues(audioContext.currentTime);
-  oldToneGain.gain.setValueAtTime(oldToneGain.gain.value, audioContext.currentTime);
-  oldToneGain.gain.linearRampToValueAtTime(0, stopAt);
-  oldSources.forEach(source => source.stop(stopAt + 0.02));
-  oldPhaseGainSource.stop(stopAt + 0.02);
-  oldSourceGain.disconnect();
-  forestTrackSources.forEach(source => source.disconnect());
-  forestTracks.forEach(track => {
+  if (oldToneGain && oldPhaseGainSource && oldSourceGain) {
+    const stopAt = audioContext.currentTime + 0.25;
+    oldToneGain.gain.cancelScheduledValues(audioContext.currentTime);
+    oldToneGain.gain.setValueAtTime(oldToneGain.gain.value, audioContext.currentTime);
+    oldToneGain.gain.linearRampToValueAtTime(0, stopAt);
+    oldPhaseGainSource.stop(stopAt + 0.02);
+    oldSourceGain.disconnect();
+  }
+  [ambientTrack, rhythmTrack, inhaleGong].forEach(track => {
+    if (!track) return;
     track.pause();
     track.currentTime = 0;
   });
+  ambientTrack = undefined;
+  rhythmTrack = undefined;
+  inhaleGong = undefined;
+  ambientTrackSource = undefined;
+  rhythmTrackSource = undefined;
+  inhaleGongSource = undefined;
+  inhaleGongGain = undefined;
 }
 
 function startSound() {
@@ -194,22 +209,25 @@ function startSound() {
     phaseGainSource.offset.value = 0;
     phaseGainSource.connect(toneGain.gain);
     sourceGain.connect(toneGain).connect(masterGain);
+    const track = createTrack(profile.url);
+    track.playbackRate = profile.phraseSeconds ? getRhythmPlaybackRate(profile) : 1;
+    const trackSource = audioContext.createMediaElementSource(track);
+    trackSource.connect(sourceGain);
     if (audioSettings.frequency === 'forest') {
-      if (forestTracks.length === 0) {
-        forestTracks = forestTrackUrls.map(url => {
-          const track = new Audio(url);
-          track.loop = true;
-          track.preload = 'auto';
-          return track;
-        });
-        forestTrackSources = forestTracks.map(track => audioContext.createMediaElementSource(track));
-      }
-      forestTrackSources.forEach(source => source.connect(sourceGain));
-      forestTracks.forEach(track => {
-        track.volume = 0.5;
-        track.play().catch(() => updateSoundUI());
-      });
+      ambientTrack = track;
+      ambientTrackSource = trackSource;
+      inhaleGong = createTrack('./sound/freesound_community-singing-bowl-gong-69238.mp3');
+      inhaleGong.loop = false;
+      inhaleGongSource = audioContext.createMediaElementSource(inhaleGong);
+      inhaleGongGain = audioContext.createGain();
+      inhaleGongGain.gain.value = 0.55;
+      inhaleGongSource.connect(inhaleGongGain).connect(masterGain);
+    } else {
+      rhythmTrack = track;
+      rhythmTrackSource = trackSource;
     }
+    track.volume = 0.5;
+    track.play().catch(() => updateSoundUI());
     phaseGainSource.start();
     audioSources.forEach(source => source.start());
     updateAudioPhase();
@@ -365,13 +383,14 @@ function startBreathCycle() {
     const step = breathSession.steps[breathSession.stepIndex];
     const section = breathSession.sessionElapsed < warmupDuration ? 'warmup' : breathSession.sessionElapsed < warmupDuration + mainDuration ? 'mainCycle' : 'cooldown';
     currentPhaseKey = step.key;
+    currentPhaseSeconds = step.seconds;
     updateAudioPhase();
     document.documentElement.style.setProperty('--breath-duration', `${step.seconds}s`);
     circle.style.transform = `scale(${step.scale || (step.key === 'inhale' ? 1.8 : 0.8)})`;
     circle.style.opacity = step.key === 'inhale' ? '1' : step.key === 'exhale' ? '0.4' : '0.7';
     phaseLabel.innerText = selectedTechnique === 'simple' ? language[step.key] : `${language[section]} · ${language[step.key]}`;
     if (breathSession.stepIndex > 0) vibrateOnTransition();
-    if (step.key === 'inhale' && breathSession.stepIndex > 0) playCycleGong();
+    if (step.key === 'inhale' && audioSettings.frequency === 'forest') playInhaleGong();
     if (step.key === 'singularity') showNextThought();
     breathSession.sessionElapsed += step.seconds;
     breathSession.stepIndex += 1;

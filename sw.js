@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onemind-v4';
+const CACHE_NAME = 'onemind-v5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,8 +6,10 @@ const APP_SHELL = [
   './app.js',
   './data/thoughts.json',
   './icon.svg',
-  './sound/dany_photo-forestbirds-319791.mp3',
-  './sound/empressnefertitimumbi-forest-bird-harmonies-258412.mp3'
+  './sound/soundreality-ambient-forest-campfire-meditation-452486.mp3',
+  './sound/freesound_community-singing-bowl-gong-69238.mp3',
+  './sound/soul_frequencies-tibetan-bowls-for-meditation-498962.mp3',
+  './sound/freesound_community-bell-meditation-75335.mp3'
 ];
 
 self.addEventListener('install', event => {

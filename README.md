@@ -16,7 +16,8 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].
   * **Hold (Singularity):** Silent, effortless point of pure being[cite: 1].
 * **Bilingual Support (i18n):** Seamlessly toggle between Czech (CS) and English (EN) with automatic system language detection[cite: 1].
-* **Ambient Audio:** Optional native Web Audio mixes two included forest MP3 recordings with tiny gongs between breathing cycles and master volume control.
+* **Ambient Audio:** Optional native Web Audio offers Forest Campfire with an included gong on inhale, plus Tibetan Bowls and Bell Meditation tracks synchronized to the selected breathing technique.
+  All included sounds are freely available from [Pixabay](https://pixabay.com/).
 * **Evening-Friendly Themes:** Auto mode uses green during daytime and switches to a low-luminance red theme one hour before sunset. Manual Dark (red evening), Green, and Light themes are also available.
 * **Mobile Pull-to-Refresh:** On touch devices, pull down from the top edge by at least 80 pixels to reload the application. Horizontal swipes do not trigger a reload.
 * **Secular Thought Impulses:** Dynamically cycles through non-religious, physics-grounded prompts during the singularity phase[cite: 1].
@@ -61,10 +62,14 @@ OneMind/
 ├── .devcontainer/        # GitHub Codespaces development setup
 ├── data/
 │   └── thoughts.json     # Bilingual JSON file containing thought impulses
+├── sound/                # Included meditation and ambient audio tracks
+├── icon.svg              # Application icon
 ├── index.html            # Main semantic HTML entry point
 ├── style.css             # Theme variables & CSS animations
 ├── app.js                # Core breath cycle & i18n logic
 ├── manifest.json         # Browser Extension (Chrome/Firefox) manifest
+├── site.webmanifest      # Progressive Web App manifest
+├── sw.js                 # Service worker and offline cache
 └── README.md             # Project documentation
 ```
 

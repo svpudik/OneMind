@@ -70,6 +70,8 @@ const techniques = {
 if (!techniques[selectedTechnique]) selectedTechnique = 'simple';
 let cycleTimeouts = [];
 let breathSession;
+let wakeLock;
+let wakeLockRequest;
 let audioSettings = { enabled: false, frequency: 'off', volume: 0.35 };
 try {
   audioSettings = { ...audioSettings, ...JSON.parse(localStorage.getItem('onemind_audio_settings') || '{}') };
@@ -96,12 +98,28 @@ let inhaleGong;
 let inhaleGongSource;
 let inhaleGongGain;
 let audioGeneration = 0;
+let rhythmInhaleCount = 0;
 const audioProfiles = {
   forest: { url: './sound/soundreality-ambient-forest-campfire-meditation-452486.mp3', level: 0.22 },
-  bowls: { url: './sound/soul_frequencies-tibetan-bowls-for-meditation-498962.mp3', level: 0.18, phraseSeconds: 29 },
-  bell: { url: './sound/freesound_community-bell-meditation-75335.mp3', level: 0.18, phraseSeconds: 30 }
+  bowls: { url: './sound/soul_frequencies-tibetan-bowls-for-meditation-498962.mp3', level: 0.35, phraseSeconds: 29, breathCycles: 2 },
+  bell: { url: './sound/freesound_community-bell-meditation-75335.mp3', level: 0.35, phraseSeconds: 30, breathCycles: 1 }
 };
 let currentPhaseSeconds = 4;
+
+function requestWakeLock() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || wakeLock || wakeLockRequest) return;
+  wakeLockRequest = navigator.wakeLock.request('screen')
+    .then(lock => {
+      wakeLock = lock;
+      lock.addEventListener('release', () => {
+        wakeLock = undefined;
+      });
+    })
+    .catch(() => {})
+    .finally(() => {
+      wakeLockRequest = undefined;
+    });
+}
 
 function getBreathCycleSeconds() {
   return techniques[selectedTechnique].main.reduce((total, step) => total + step.seconds, 0);
@@ -109,7 +127,7 @@ function getBreathCycleSeconds() {
 
 function getRhythmPlaybackRate(profile) {
   const cycleSeconds = getBreathCycleSeconds();
-  const cycleCount = Math.max(1, Math.round(profile.phraseSeconds / cycleSeconds));
+  const cycleCount = profile.breathCycles || Math.max(1, Math.round(profile.phraseSeconds / cycleSeconds));
   return profile.phraseSeconds / (cycleCount * cycleSeconds);
 }
 
@@ -136,6 +154,15 @@ function playInhaleGong() {
   if (!inhaleGong || !audioContext || audioContext.state !== 'running') return;
   inhaleGong.currentTime = 0;
   inhaleGong.play().catch(() => {});
+}
+
+function playRhythmOnInhale() {
+  if (!rhythmTrack || !audioContext || audioContext.state !== 'running') return;
+  rhythmInhaleCount += 1;
+  const shouldRestart = audioSettings.frequency === 'bell' || rhythmInhaleCount % 2 === 1;
+  if (!shouldRestart) return;
+  rhythmTrack.currentTime = 0;
+  rhythmTrack.play().catch(() => {});
 }
 
 function saveAudioSettings() {
@@ -170,6 +197,7 @@ function stopSound() {
   const oldPhaseGainSource = phaseGainSource;
   const oldSourceGain = sourceGain;
   audioSources = [];
+  rhythmInhaleCount = 0;
   toneGain = undefined;
   phaseGainSource = undefined;
   sourceGain = undefined;
@@ -206,7 +234,7 @@ function startSound() {
     sourceGain = audioContext.createGain();
     phaseGainSource = audioContext.createConstantSource();
     sourceGain.gain.value = profile.level;
-    phaseGainSource.offset.value = 0;
+    phaseGainSource.offset.value = getPhaseAudioLevel();
     phaseGainSource.connect(toneGain.gain);
     sourceGain.connect(toneGain).connect(masterGain);
     const track = createTrack(profile.url);
@@ -226,8 +254,8 @@ function startSound() {
       rhythmTrack = track;
       rhythmTrackSource = trackSource;
     }
-    track.volume = 0.5;
-    track.play().catch(() => updateSoundUI());
+    track.volume = audioSettings.frequency === 'forest' ? 0.5 : 1;
+    if (audioSettings.frequency === 'forest') track.play().catch(() => updateSoundUI());
     phaseGainSource.start();
     audioSources.forEach(source => source.start());
     updateAudioPhase();
@@ -365,6 +393,7 @@ function expandBlocks(blocks) {
 }
 
 function startBreathCycle() {
+  requestWakeLock();
   cycleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
   cycleTimeouts = [];
   const technique = techniques[selectedTechnique];
@@ -391,6 +420,7 @@ function startBreathCycle() {
     phaseLabel.innerText = selectedTechnique === 'simple' ? language[step.key] : `${language[section]} · ${language[step.key]}`;
     if (breathSession.stepIndex > 0) vibrateOnTransition();
     if (step.key === 'inhale' && audioSettings.frequency === 'forest') playInhaleGong();
+    if (step.key === 'inhale' && (audioSettings.frequency === 'bowls' || audioSettings.frequency === 'bell')) playRhythmOnInhale();
     if (step.key === 'singularity') showNextThought();
     breathSession.sessionElapsed += step.seconds;
     breathSession.stepIndex += 1;
@@ -620,6 +650,7 @@ soundVolume.addEventListener('input', event => {
   }
 });
 document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) requestWakeLock();
   if (!audioContext) return;
   if (document.hidden) {
     audioGeneration++;
@@ -629,6 +660,8 @@ document.addEventListener('visibilitychange', () => {
     startSound();
   }
 });
+document.addEventListener('pointerdown', requestWakeLock);
+document.addEventListener('keydown', requestWakeLock);
 
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);

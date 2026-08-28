@@ -98,7 +98,6 @@ let inhaleGong;
 let inhaleGongSource;
 let inhaleGongGain;
 let audioGeneration = 0;
-let rhythmInhaleCount = 0;
 const audioProfiles = {
   forest: { url: './sound/soundreality-ambient-forest-campfire-meditation-452486.mp3', level: 0.22 },
   bowls: { url: './sound/soul_frequencies-tibetan-bowls-for-meditation-498962.mp3', level: 0.35, phraseSeconds: 29, breathCycles: 2 },
@@ -158,9 +157,6 @@ function playInhaleGong() {
 
 function playRhythmOnInhale() {
   if (!rhythmTrack || !audioContext || audioContext.state !== 'running') return;
-  rhythmInhaleCount += 1;
-  const shouldRestart = audioSettings.frequency === 'bell' || rhythmInhaleCount % 2 === 1;
-  if (!shouldRestart) return;
   rhythmTrack.currentTime = 0;
   rhythmTrack.play().catch(() => {});
 }
@@ -197,7 +193,6 @@ function stopSound() {
   const oldPhaseGainSource = phaseGainSource;
   const oldSourceGain = sourceGain;
   audioSources = [];
-  rhythmInhaleCount = 0;
   toneGain = undefined;
   phaseGainSource = undefined;
   sourceGain = undefined;

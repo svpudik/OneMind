@@ -15,7 +15,7 @@ const translations = {
     relaxDescription: "Krabičkové dýchání 4-4-4-4 pro soustředění a stabilní rytmus.",
     coherenceDescription: "Postupně zpomalí dech na 5 nádechů za minutu bez zadržování.",
     tranquilityDescription: "Klidný rytmus 4-7-8 s delším výdechem a zadržením dechu.",
-    pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
+    pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", start: "Spustit sezení", end: "Sezení dokončeno", restart: "Spustit znovu", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
       forest: "Lesní táborák — gong při nádechu",
       bowls: "Tibetské mísy — rytmus dechu",
@@ -30,7 +30,7 @@ const translations = {
     relaxDescription: "4-4-4-4 box breathing for focus and a steady rhythm.",
     coherenceDescription: "Gradually slows breathing to 5 breaths per minute with no holds.",
     tranquilityDescription: "A calm 4-7-8 rhythm with a longer exhale and breath hold.",
-    pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", sound: "Sound", volume: "Volume", off: "Off",
+    pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", start: "Start session", end: "Session complete", restart: "Restart session", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
       forest: "Forest Campfire — Gong on Inhale",
       bowls: "Tibetan Bowls — Breath Rhythm",
@@ -40,6 +40,7 @@ const translations = {
 };
 
 let currentPhaseKey = 'inhale';
+let sessionStatus = 'ready';
 let selectedTechnique = localStorage.getItem('onemind_breath_technique') || 'simple';
 const techniques = {
   simple: {
@@ -307,11 +308,42 @@ function updateBreathControlsUI() {
   const isPaused = breathSession && breathSession.paused;
   const sessionControls = document.getElementById('breath-session-controls');
   const playPause = document.getElementById('breath-play-pause');
-  sessionControls.hidden = selectedTechnique === 'simple';
+  const sessionAction = document.getElementById('breath-session-action');
+  sessionControls.hidden = selectedTechnique === 'simple' || sessionStatus !== 'running';
+  sessionAction.hidden = selectedTechnique === 'simple' || sessionStatus === 'running';
+  sessionAction.innerText = sessionStatus === 'complete' ? language.restart : language.start;
+  sessionAction.setAttribute('aria-label', sessionAction.innerText);
   playPause.dataset.state = isPaused ? 'play' : 'pause';
   playPause.setAttribute('aria-pressed', String(Boolean(isPaused)));
   playPause.setAttribute('aria-label', isPaused ? language.resume : language.pause);
   document.getElementById('breath-reset').setAttribute('aria-label', language.reset);
+}
+
+function clearBreathCycle() {
+  cycleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  cycleTimeouts = [];
+  if (breathSession) breathSession.paused = true;
+  stopSound();
+}
+
+function prepareBreathSession() {
+  clearBreathCycle();
+  breathSession = undefined;
+  sessionStatus = 'ready';
+  currentPhaseKey = 'inhale';
+  phaseLabel.innerText = translations[currentLang].start;
+  updateBreathControlsUI();
+}
+
+function completeBreathSession() {
+  breathSession = undefined;
+  sessionStatus = 'complete';
+  currentPhaseKey = 'inhale';
+  phaseLabel.innerText = translations[currentLang].end;
+  circle.style.transform = 'scale(0.8)';
+  circle.style.opacity = '0.4';
+  stopSound();
+  updateBreathControlsUI();
 }
 
 function setLanguage(lang) {
@@ -327,7 +359,8 @@ fetch('./data/thoughts.json')
     thoughts = data;
     shuffleThoughts();
     updateLangUI();
-    startBreathCycle();
+    if (selectedTechnique === 'simple') startBreathCycle();
+    else prepareBreathSession();
   });
 
 function shuffleThoughts(previousThoughtId) {
@@ -402,6 +435,7 @@ function startBreathCycle() {
     ...expandBlocks(technique.cooldown)
   ];
   breathSession = { steps, stepIndex: 0, sessionElapsed: 0, paused: false };
+  sessionStatus = 'running';
 
   const runStep = () => {
     if (breathSession.paused) return;
@@ -422,12 +456,14 @@ function startBreathCycle() {
     breathSession.stepIndex += 1;
     cycleTimeouts.push(setTimeout(() => {
       if (breathSession.stepIndex < breathSession.steps.length) runStep();
-      else startBreathCycle();
+      else if (selectedTechnique === 'simple') startBreathCycle();
+      else completeBreathSession();
     }, step.seconds * 1000));
   };
 
   breathSession.runStep = runStep;
   runStep();
+  if (audioSettings.enabled) startSound();
   updateBreathControlsUI();
 }
 // Správa témat
@@ -606,8 +642,10 @@ breathTechniqueSelect.addEventListener('change', event => {
   selectedTechnique = event.target.value;
   localStorage.setItem('onemind_breath_technique', selectedTechnique);
   updateTechniqueOptions();
-  startBreathCycle();
+  if (selectedTechnique === 'simple') startBreathCycle();
+  else prepareBreathSession();
 });
+document.getElementById('breath-session-action').addEventListener('click', () => startBreathCycle());
 document.getElementById('breath-play-pause').addEventListener('click', () => {
   if (!breathSession) return;
   if (breathSession.paused) {

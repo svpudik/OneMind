@@ -10,7 +10,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🌟 Key Features
 
-* **Guided Breathing Techniques:** Choose Simple Cycle (three phases without a warm-up), Relax and Focus (box breathing), Coherence (gradual 4/5/6-second pacing), or Tranquility (4-7-8 breathing). Guided sessions can be paused, resumed, or reset, and longer techniques include a warm-up, main cycle, and cooldown with gentle vibration at each breath transition on supported devices.
+* **Guided Breathing Techniques:** Choose Simple Cycle (three phases without a warm-up), Relax and Focus (box breathing), Coherence (gradual 4/5/6-second pacing), or Tranquility (4-7-8 breathing). Simple Cycle runs continuously; the longer techniques wait for an explicit start, end with a restart option, and can be paused, resumed, or reset. Longer techniques include a warm-up, main cycle, and cooldown with gentle vibration at each breath transition on supported devices.
 * **Breath & Singularity Visualizer:** Synchronizes visual feedback with a 3-phase breathing cycle[cite: 1]:
   * **Inhale:** Fullness / Openness to space[cite: 1].
   * **Exhale:** Emptiness / Releasing mental concepts[cite: 1].
@@ -27,7 +27,7 @@ Built upon a zero-dogma, secular framework, **OneMind** leverages the natural rh
 
 ## 🎛️ Controls
 
-Open the settings button to choose a breathing technique, adjust ambient sound, volume, language, and theme. On supported mobile devices, each phase transition gives a gentle vibration. Pull down from the top edge by at least 80 pixels to reload the application when needed.
+Open the settings button to choose a breathing technique and ambient sound before starting a session, or adjust volume, language, and theme. On supported mobile devices, each phase transition gives a gentle vibration. Pull down from the top edge by at least 80 pixels to reload the application when needed.
 
 Location is optional and is used only by Auto theme to calculate local sunrise and sunset, so OneMind can switch from green to red one hour before sunset. Location is not required for the breathing exercise or ambient audio. The coordinates are used locally in the browser, are not collected, stored, or sent to any server, and Auto theme falls back to a 19:00–07:00 local-time schedule if permission is denied.
 

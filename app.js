@@ -55,7 +55,7 @@ const techniques = {
     cooldown: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
   },
   coherence: {
-    warmup: [[[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60], [[{ key: 'inhale', seconds: 5 }, { key: 'exhale', seconds: 5 }], 60]],
+    warmup: [[{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60, [{ key: 'inhale', seconds: 5 }, { key: 'exhale', seconds: 5 }], 60],
     main: [{ key: 'inhale', seconds: 6 }, { key: 'exhale', seconds: 6 }],
     mainMinutes: 11,
     cooldown: [[{ key: 'inhale', seconds: 5 }, { key: 'exhale', seconds: 5 }], 60, [{ key: 'inhale', seconds: 4 }, { key: 'exhale', seconds: 4 }], 60]
@@ -373,12 +373,11 @@ function vibrateOnTransition() {
 
 function expandSteps(steps, durationSeconds) {
   const expanded = [];
-  let elapsed = 0;
-  while (elapsed < durationSeconds) {
+  const cycleSeconds = steps.reduce((total, step) => total + step.seconds, 0);
+  const cycleCount = Math.ceil(durationSeconds / cycleSeconds);
+  for (let cycle = 0; cycle < cycleCount; cycle += 1) {
     for (const step of steps) {
-      if (elapsed >= durationSeconds) break;
       expanded.push(step);
-      elapsed += step.seconds;
     }
   }
   return expanded;
@@ -398,11 +397,13 @@ function startBreathCycle() {
   cycleTimeouts = [];
   const technique = techniques[selectedTechnique];
   const language = translations[currentLang];
-  const warmupDuration = technique.warmup.length ? 60 : 0;
+  const warmupSteps = expandBlocks(technique.warmup);
+  const warmupDuration = warmupSteps.reduce((total, step) => total + step.seconds, 0);
   const mainDuration = technique.mainMinutes * 60;
+  const mainSteps = expandSteps(technique.main, mainDuration);
   const steps = [
-    ...expandBlocks(technique.warmup),
-    ...expandSteps(technique.main, mainDuration),
+    ...warmupSteps,
+    ...mainSteps,
     ...expandBlocks(technique.cooldown)
   ];
   breathSession = { steps, stepIndex: 0, sessionElapsed: 0, paused: false };

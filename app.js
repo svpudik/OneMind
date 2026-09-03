@@ -8,14 +8,14 @@ const thoughtEl = document.getElementById('thought');
 
 const translations = {
   cs: {
-    inhale: "Nádech (Plnost)", exhale: "Výdech (Prázdnota)", singularity: "Zadržení (Singularita)",
+    inhale: "Nádech", exhale: "Výdech", singularity: "Zadržení",
     pace: "Tempo", technique: "Technika", warmup: "Zahřátí", mainCycle: "Hlavní cyklus", cooldown: "Zklidnění",
     simple: "Jednoduchý cyklus", relax: "Uvolnění a soustředění", coherence: "Koherence", tranquility: "Klid",
-    simpleDescription: "Tři jednoduché fáze bez zahřátí: nádech, výdech a krátké zadržení.",
+    simpleDescription: "Tři jednoduché fáze bez zahřátí: nádech, výdech a zadržení po 4 sekundách.",
     relaxDescription: "Krabičkové dýchání 4-4-4-4 pro soustředění a stabilní rytmus.",
     coherenceDescription: "Postupně zpomalí dech na 5 nádechů za minutu bez zadržování.",
     tranquilityDescription: "Klidný rytmus 4-7-8 s delším výdechem a zadržením dechu.",
-    pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", start: "Spustit sezení", end: "Sezení dokončeno", restart: "Spustit znovu", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
+    pause: "Pozastavit dýchání", resume: "Pokračovat v dýchání", reset: "Restartovat dýchání", start: "Spustit sezení", end: "Sezení dokončeno", restart: "Spustit znovu", phaseLabels: "Popisky fází", sound: "Zvuk", volume: "Hlasitost", off: "Vypnuto",
     frequencies: {
       forest: "Lesní táborák — gong při nádechu",
       bowls: "Tibetské mísy — rytmus dechu",
@@ -23,14 +23,14 @@ const translations = {
     }
   },
   en: {
-    inhale: "Inhale (Fullness)", exhale: "Exhale (Emptiness)", singularity: "Hold (Singularity)",
+    inhale: "Inhale", exhale: "Exhale", singularity: "Hold",
     pace: "Pace", technique: "Technique", warmup: "Warm-up", mainCycle: "Main Cycle", cooldown: "Cooldown",
     simple: "Simple Cycle", relax: "Relax and Focus", coherence: "Coherence", tranquility: "Tranquility",
-    simpleDescription: "Three simple phases with no warm-up: inhale, exhale, and a short hold.",
+    simpleDescription: "Three simple phases with no warm-up: 4 seconds each for inhale, exhale, and hold.",
     relaxDescription: "4-4-4-4 box breathing for focus and a steady rhythm.",
     coherenceDescription: "Gradually slows breathing to 5 breaths per minute with no holds.",
     tranquilityDescription: "A calm 4-7-8 rhythm with a longer exhale and breath hold.",
-    pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", start: "Start session", end: "Session complete", restart: "Restart session", sound: "Sound", volume: "Volume", off: "Off",
+    pause: "Pause breathing", resume: "Resume breathing", reset: "Reset breathing", start: "Start session", end: "Session complete", restart: "Restart session", phaseLabels: "Phase labels", sound: "Sound", volume: "Volume", off: "Off",
     frequencies: {
       forest: "Forest Campfire — Gong on Inhale",
       bowls: "Tibetan Bowls — Breath Rhythm",
@@ -41,11 +41,12 @@ const translations = {
 
 let currentPhaseKey = 'inhale';
 let sessionStatus = 'ready';
+let phaseLabelsVisible = localStorage.getItem('onemind_phase_labels') !== 'false';
 let selectedTechnique = localStorage.getItem('onemind_breath_technique') || 'simple';
 const techniques = {
   simple: {
     warmup: [],
-    main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'exhale', seconds: 4, scale: 0.8 }, { key: 'singularity', seconds: 2, scale: 0.8 }],
+    main: [{ key: 'inhale', seconds: 4, scale: 1.8 }, { key: 'exhale', seconds: 4, scale: 0.8 }, { key: 'singularity', seconds: 4, scale: 0.8 }],
     mainMinutes: 15,
     cooldown: []
   },
@@ -273,6 +274,7 @@ function updateLangUI() {
   document.documentElement.lang = currentLang;
   const language = translations[currentLang];
   document.getElementById('breath-technique-label').innerText = language.technique;
+  document.getElementById('phase-label-toggle-label').innerText = language.phaseLabels;
   document.getElementById('sound-label').innerText = language.sound;
   document.getElementById('volume-label').innerText = language.volume;
   document.getElementById('sound-toggle').setAttribute('aria-label', `${language.sound}: ${audioSettings.enabled ? language.off : language.sound}`);
@@ -282,6 +284,17 @@ function updateLangUI() {
   updateSoundUI();
   phaseLabel.innerText = translations[currentLang][currentPhaseKey];
   showCurrentThought();
+}
+
+function updatePhaseLabelUI() {
+  phaseLabel.hidden = !phaseLabelsVisible;
+  document.getElementById('phase-label-toggle').checked = phaseLabelsVisible;
+}
+
+function setPhaseLabelsVisible(visible) {
+  phaseLabelsVisible = visible;
+  localStorage.setItem('onemind_phase_labels', String(visible));
+  updatePhaseLabelUI();
 }
 
 function updateFrequencyOptions() {
@@ -645,6 +658,9 @@ breathTechniqueSelect.addEventListener('change', event => {
   if (selectedTechnique === 'simple') startBreathCycle();
   else prepareBreathSession();
 });
+const phaseLabelToggle = document.getElementById('phase-label-toggle');
+phaseLabelToggle.checked = phaseLabelsVisible;
+phaseLabelToggle.addEventListener('change', event => setPhaseLabelsVisible(event.target.checked));
 document.getElementById('breath-session-action').addEventListener('click', () => startBreathCycle());
 document.getElementById('breath-play-pause').addEventListener('click', () => {
   if (!breathSession) return;
@@ -699,3 +715,4 @@ document.addEventListener('keydown', requestWakeLock);
 
 // Spustit nastavení tématu při načtení
 applyTheme(currentTheme);
+updatePhaseLabelUI();
